@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a problem with one of the MCP servers
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: server
+    attributes:
+      label: Which server?
+      options:
+        - notes
+        - other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: When I call the `search_notes` tool, ...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure the server with ...
+        2. Ask the client to ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: Claude Desktop / Claude Code / Cursor / ...
+    validations:
+      required: false
+  - type: input
+    id: versions
+    attributes:
+      label: Node & OS version
+      placeholder: Node 22.0.0, macOS 15
+    validations:
+      required: false

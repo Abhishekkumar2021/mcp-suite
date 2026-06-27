@@ -10,6 +10,21 @@
     "build": "npm run build --workspaces --if-present",
     "clean": "rm -rf servers/*/dist"
   },
+  "author": "Abhishek (https://github.com/Abhishekkumar2021)",
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-servers#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhishekkumar2021/mcp-servers.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-servers/issues"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "claude",
+    "monorepo"
+  ],
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.6.0"

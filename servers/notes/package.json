@@ -23,7 +23,17 @@
     "markdown",
     "claude"
   ],
+  "author": "Abhishek (https://github.com/Abhishekkumar2021)",
   "license": "MIT",
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-servers/tree/main/servers/notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhishekkumar2021/mcp-servers.git",
+    "directory": "servers/notes"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-servers/issues"
+  },
   "engines": {
     "node": ">=18"
   },
