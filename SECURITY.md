@@ -5,7 +5,7 @@
 If you discover a security vulnerability in any of these MCP servers, please
 report it privately rather than opening a public issue.
 
-Use GitHub's [private vulnerability reporting](https://github.com/Abhishekkumar2021/mcp-servers/security/advisories/new)
+Use GitHub's [private vulnerability reporting](https://github.com/Abhishekkumar2021/mcp-suite/security/advisories/new)
 to disclose responsibly.
 
 Please include:

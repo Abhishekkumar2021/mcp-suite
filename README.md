@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🧰 mcp-servers
+# 🧰 mcp-suite
 
 **A collection of [Model Context Protocol](https://modelcontextprotocol.io) servers, built in TypeScript.**
 
-[![CI](https://github.com/Abhishekkumar2021/mcp-servers/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhishekkumar2021/mcp-servers/actions/workflows/ci.yml)
+[![CI](https://github.com/Abhishekkumar2021/mcp-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhishekkumar2021/mcp-suite/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-43853d.svg)](https://nodejs.org)
@@ -35,8 +35,8 @@ _More on the way: a GitHub helper, a Spotify controller, and others._
 ## Quickstart
 
 ```bash
-git clone https://github.com/Abhishekkumar2021/mcp-servers.git
-cd mcp-servers
+git clone https://github.com/Abhishekkumar2021/mcp-suite.git
+cd mcp-suite
 npm install      # installs deps for every workspace
 npm run build    # builds every server
 ```
@@ -56,7 +56,7 @@ Or with Claude Desktop (`claude_desktop_config.json`):
   "mcpServers": {
     "notes": {
       "command": "node",
-      "args": ["/absolute/path/to/mcp-servers/servers/notes/dist/index.js"],
+      "args": ["/absolute/path/to/mcp-suite/servers/notes/dist/index.js"],
       "env": { "NOTES_DIR": "/absolute/path/to/your/notes" }
     }
   }
@@ -81,7 +81,7 @@ npm run clean                    # remove all build output
 3. Run `npm install` at the root so the workspace picks it up.
 4. Add a row to the [Servers](#servers) table above.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+All servers follow the [naming standard](NAMING.md) (`@abhishekmcp/<slug>`). See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Publishing
 

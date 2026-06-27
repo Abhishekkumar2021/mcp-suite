@@ -1,10 +1,10 @@
 {
-  "name": "mcp-notes-server",
+  "name": "@abhishekmcp/notes",
   "version": "0.1.0",
-  "description": "An MCP server for managing local markdown notes — search, create, link, and read notes from any MCP client.",
+  "description": "MCP server for local markdown notes — search, create, link, and read notes from any MCP client.",
   "type": "module",
   "bin": {
-    "mcp-notes-server": "dist/index.js"
+    "mcp-notes": "dist/index.js"
   },
   "files": [
     "dist"
@@ -29,14 +29,14 @@
   ],
   "author": "Abhishek (https://github.com/Abhishekkumar2021)",
   "license": "MIT",
-  "homepage": "https://github.com/Abhishekkumar2021/mcp-servers/tree/main/servers/notes#readme",
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/notes#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Abhishekkumar2021/mcp-servers.git",
+    "url": "git+https://github.com/Abhishekkumar2021/mcp-suite.git",
     "directory": "servers/notes"
   },
   "bugs": {
-    "url": "https://github.com/Abhishekkumar2021/mcp-servers/issues"
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite/issues"
   },
   "engines": {
     "node": ">=18"

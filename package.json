@@ -1,8 +1,8 @@
 {
-  "name": "mcp-servers",
+  "name": "mcp-suite",
   "version": "0.0.0",
   "private": true,
-  "description": "A collection of Model Context Protocol (MCP) servers.",
+  "description": "A suite of Model Context Protocol (MCP) servers.",
   "workspaces": [
     "servers/*"
   ],
@@ -11,13 +11,13 @@
     "clean": "rm -rf servers/*/dist"
   },
   "author": "Abhishek (https://github.com/Abhishekkumar2021)",
-  "homepage": "https://github.com/Abhishekkumar2021/mcp-servers#readme",
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Abhishekkumar2021/mcp-servers.git"
+    "url": "git+https://github.com/Abhishekkumar2021/mcp-suite.git"
   },
   "bugs": {
-    "url": "https://github.com/Abhishekkumar2021/mcp-servers/issues"
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite/issues"
   },
   "keywords": [
     "mcp",

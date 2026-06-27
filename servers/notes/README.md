@@ -1,4 +1,4 @@
-# mcp-notes-server
+# @abhishekmcp/notes
 
 An [MCP](https://modelcontextprotocol.io) server for managing local markdown notes. Lets any MCP client (Claude Desktop, Claude Code, Cursor, …) search, read, create, link, and organize notes in a folder on your machine.
 
@@ -44,7 +44,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "notes": {
       "command": "node",
-      "args": ["/absolute/path/to/mcp-notes/dist/index.js"],
+      "args": ["/absolute/path/to/mcp-suite/servers/notes/dist/index.js"],
       "env": { "NOTES_DIR": "/absolute/path/to/your/notes" }
     }
   }
@@ -54,15 +54,13 @@ Add to `claude_desktop_config.json`:
 ### Claude Code
 
 ```bash
-claude mcp add notes --env NOTES_DIR=$HOME/notes -- node /absolute/path/to/mcp-notes/dist/index.js
+claude mcp add notes --env NOTES_DIR=$HOME/notes -- node /absolute/path/to/mcp-suite/servers/notes/dist/index.js
 ```
 
 ## Publishing to npm
 
-```bash
-npm login
-npm publish --access public
-```
+This package publishes automatically via GitHub Actions (Trusted Publishing / OIDC) when a
+release tagged `notes-v<version>` is created. See the repo root for the CD workflow.
 
 Once published, users can run it without cloning:
 
@@ -71,14 +69,12 @@ Once published, users can run it without cloning:
   "mcpServers": {
     "notes": {
       "command": "npx",
-      "args": ["-y", "mcp-notes-server"],
+      "args": ["-y", "@abhishekmcp/notes"],
       "env": { "NOTES_DIR": "/path/to/notes" }
     }
   }
 }
 ```
-
-> Note: `mcp-notes-server` is an example name — pick a unique name in `package.json` before publishing (check availability with `npm view <name>`).
 
 ## License
 

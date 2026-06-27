@@ -5,7 +5,7 @@ name: Publish to npm
 # Auth uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
 # One-time setup per package on npmjs.com:
 #   Package settings → Publishing access → "Trusted Publisher" → GitHub Actions
-#   org/repo: Abhishekkumar2021/mcp-servers, workflow: publish.yml
+#   org/repo: Abhishekkumar2021/mcp-suite, workflow: publish.yml
 #
 # Release tag convention: "<package>-v<version>", e.g. "notes-v0.1.0".
 # (A plain "v0.1.0" tag defaults to publishing the notes server.)

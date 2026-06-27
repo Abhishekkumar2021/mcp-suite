@@ -5,8 +5,8 @@ Thanks for your interest in contributing! This repo is a collection of Model Con
 ## Getting started
 
 ```bash
-git clone https://github.com/Abhishekkumar2021/mcp-servers.git
-cd mcp-servers
+git clone https://github.com/Abhishekkumar2021/mcp-suite.git
+cd mcp-suite
 npm install      # installs deps for every workspace
 npm run build    # builds every server
 ```
@@ -23,6 +23,8 @@ servers/
 ```
 
 ## Adding a new server
+
+> **Follow the [naming standard](NAMING.md).** All packages are scoped as `@abhishekmcp/<slug>`.
 
 1. Create `servers/<name>/` with:
    - a `package.json` whose `name` is unique on npm (check with `npm view <name>`)
