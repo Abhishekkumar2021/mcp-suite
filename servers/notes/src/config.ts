@@ -36,3 +36,43 @@ export function isReadOnly(): boolean {
 export function cacheDisabled(): boolean {
   return process.env.NOTES_NO_CACHE === "1";
 }
+
+// --- Semantic search (v0.3) ----------------------------------------------
+
+/** Embedding model identity (recorded in the cache to invalidate on change). */
+export const EMBED_MODEL_ID = "Xenova/all-MiniLM-L6-v2:quantized";
+/** Embedding dimensionality of all-MiniLM-L6-v2. */
+export const EMBED_DIM = 384;
+/** Max WordPiece tokens fed to the model (longer notes are truncated). */
+export const EMBED_MAX_TOKENS = 256;
+/** Bump to force re-embedding of every note on upgrade. */
+export const EMBED_CACHE_VERSION = 1;
+/** Sidecar cache of per-note vectors, kept inside the notes dir. */
+export const EMBEDDINGS_FILENAME = ".notes-embeddings.json";
+
+const HF_BASE = "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main";
+/** Quantized ONNX model (~23 MB) — downloaded once at runtime. */
+export const EMBED_MODEL_URL = `${HF_BASE}/onnx/model_quantized.onnx`;
+/** BERT-uncased vocabulary (~232 KB) for the hand-rolled tokenizer. */
+export const EMBED_VOCAB_URL = `${HF_BASE}/vocab.txt`;
+/** Local filenames for the cached artifacts. */
+export const EMBED_MODEL_FILE = "all-MiniLM-L6-v2.quantized.onnx";
+export const EMBED_VOCAB_FILE = "all-MiniLM-L6-v2.vocab.txt";
+
+/**
+ * Directory where the embedding model + vocab are cached (downloaded once per
+ * machine). Override with NOTES_MODEL_DIR; defaults to ~/.cache/mcp-notes/models.
+ */
+export function getModelDir(): string {
+  const override = process.env.NOTES_MODEL_DIR;
+  if (override) {
+    const expanded = override.startsWith("~") ? path.join(homedir(), override.slice(1)) : override;
+    return path.resolve(expanded);
+  }
+  return path.join(homedir(), ".cache", "mcp-notes", "models");
+}
+
+/** Absolute path to the persisted embeddings cache (sidecar to the text index). */
+export function getEmbeddingsPath(): string {
+  return path.join(getNotesDir(), EMBEDDINGS_FILENAME);
+}

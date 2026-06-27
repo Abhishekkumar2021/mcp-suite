@@ -31,8 +31,9 @@ import {
   graphOverview,
   relatedNotes,
 } from "./graph.js";
+import { semanticSearch } from "./semantic.js";
 
-const server = new McpServer({ name: "mcp-notes-server", version: "0.2.0" });
+const server = new McpServer({ name: "mcp-notes-server", version: "0.3.0" });
 
 const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
 const fail = (err: unknown) => text(`Error: ${(err as Error).message}`);
@@ -259,6 +260,34 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  "semantic_search",
+  {
+    title: "Semantic search",
+    description:
+      "Search notes by meaning using local embeddings (all-MiniLM-L6-v2, runs " +
+      "offline after a one-time model download). Finds related notes even with no " +
+      "shared keywords. `hybrid` fuses this with keyword search for best results.",
+    inputSchema: {
+      query: z.string().describe("Natural-language query"),
+      limit: z.number().int().positive().max(100).optional().describe("Max results (default 10)"),
+      hybrid: z.boolean().optional().describe("Fuse semantic + keyword ranking (default false)"),
+    },
+  },
+  async ({ query, limit, hybrid }) => {
+    try {
+      const r = await semanticSearch(query, { limit, hybrid });
+      if (r.hits.length === 0) return text(`No semantic matches for "${query}".`);
+      const lines = r.hits.map(
+        (h) => `- ${h.name} (score ${h.score.toFixed(3)})${h.snippet ? `\n    ${h.snippet}` : ""}`,
+      );
+      return text(`${r.total} result(s)${r.hasMore ? " (more available)" : ""}:\n${lines.join("\n")}`);
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
 // --- Mutating tools (omitted entirely when NOTES_READONLY=1) --------------
 
 if (!isReadOnly()) {
@@ -366,7 +395,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `mcp-notes-server v0.2.0 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
+    `mcp-notes-server v0.3.0 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
   );
 }
 

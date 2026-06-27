@@ -17,6 +17,7 @@ Pure JavaScript, no native dependencies, no API keys — everything runs locally
 
 ### Search & discovery
 - `search_notes` — ranked full-text search ([MiniSearch](https://github.com/lucaong/minisearch)); supports `fuzzy` and `prefix` matching, a `field` filter (`title`/`tag`/`body`/`path`), and returns ranked snippets with surrounding context
+- `semantic_search` — **meaning-based** search using local embeddings; finds related notes even with no shared keywords (e.g. "puppy" matches a note about "canine companions"). Optional `hybrid` mode fuses semantic + keyword ranking
 - `list_tags` — every tag across the vault with note counts
 - `list_todos` — aggregate `- [ ]` / `- [x]` checkboxes across all notes
 
@@ -52,6 +53,10 @@ All via environment variables:
 | `NOTES_DIR` | `~/notes` | Directory where notes live (a leading `~` is expanded). |
 | `NOTES_READONLY` | _unset_ | Set to `1` to disable all mutating tools (`create`/`append`/`delete`/`move` are not even registered) — safe for sharing a vault. |
 | `NOTES_NO_CACHE` | _unset_ | Set to `1` to skip the on-disk index cache and rebuild in memory each start. |
+| `NOTES_MODEL_DIR` | `~/.cache/mcp-notes/models` | Where the semantic-search embedding model is cached. |
+
+### Semantic search & the embedding model
+`semantic_search` runs the [all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2) model **locally** via WebAssembly ([onnxruntime-web](https://github.com/microsoft/onnxruntime)) — no API keys, no native dependencies, no data leaves your machine. The quantized model (~23 MB) is downloaded **once** on first use into `NOTES_MODEL_DIR` and cached; embeddings are stored in `<NOTES_DIR>/.notes-embeddings.json` and incrementally updated as notes change. The first `semantic_search` call needs network access for the download and embeds the whole vault; everything after that is offline and fast. Keyword search and all other tools work without ever triggering this.
 
 ### Index cache
 For fast warm starts the server persists its search index to `<NOTES_DIR>/.notes-index.json` and, on startup, incrementally re-parses only the notes that changed (by mtime/size) since last run. The cache is rebuilt automatically if it's missing, unreadable, or from an older index version. Files on disk are always the source of truth.
