@@ -1,0 +1,62 @@
+name: Publish to npm
+
+# Publishes a server to npm when a GitHub Release is published.
+#
+# Auth uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
+# One-time setup per package on npmjs.com:
+#   Package settings → Publishing access → "Trusted Publisher" → GitHub Actions
+#   org/repo: Abhishekkumar2021/mcp-servers, workflow: publish.yml
+#
+# Release tag convention: "<package>-v<version>", e.g. "notes-v0.1.0".
+# (A plain "v0.1.0" tag defaults to publishing the notes server.)
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for OIDC trusted publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine target server from release tag
+        id: target
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          # "<server>-v<version>" -> "<server>"; fall back to "notes".
+          if [[ "$tag" == *-v* ]]; then
+            server="${tag%-v*}"
+          else
+            server="notes"
+          fi
+          if [[ ! -d "servers/$server" ]]; then
+            echo "::error::No server directory at servers/$server (from tag '$tag')"
+            exit 1
+          fi
+          echo "server=$server" >> "$GITHUB_OUTPUT"
+          echo "Publishing servers/$server"
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted Publishing (OIDC) requires a recent npm.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build -w "servers/${{ steps.target.outputs.server }}"
+
+      - name: Publish with provenance
+        run: npm publish -w "servers/${{ steps.target.outputs.server }}" --provenance --access public
