@@ -1,7 +1,7 @@
 {
   "name": "@abhishekmcp/notes",
-  "version": "0.1.1",
-  "description": "MCP server for local markdown notes — search, create, link, and read notes from any MCP client.",
+  "version": "0.2.0",
+  "description": "MCP server for local markdown notes — ranked search, tags, todos, and a wiki-link knowledge graph, from any MCP client.",
   "type": "module",
   "bin": {
     "mcp-notes": "dist/index.js"
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "minisearch": "^7.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
