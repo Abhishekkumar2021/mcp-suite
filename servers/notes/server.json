@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Abhishekkumar2021/notes",
   "title": "Notes",
-  "description": "Local markdown notes: ranked + semantic search, tags, todos, a wiki-link knowledge graph, daily notes, templates, and slash-command workflows.",
+  "description": "Local markdown notes: ranked + semantic search, tags, todos, and a wiki-link knowledge graph.",
   "version": "0.4.1",
   "repository": {
     "url": "https://github.com/Abhishekkumar2021/mcp-suite",
