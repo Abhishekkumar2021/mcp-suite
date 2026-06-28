@@ -1,0 +1,10 @@
+{
+  "name": "git",
+  "version": "0.1.0",
+  "description": "Local Git for any MCP client: status, log, diff, file history, branches/tags, read-at-ref, and gated stage/commit — pure-JS (isomorphic-git), no git binary. Runs @abhishekmcp/git via npx.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/plugins/git#readme",
+  "repository": "https://github.com/Abhishekkumar2021/mcp-suite",
+  "license": "MIT",
+  "keywords": ["git", "isomorphic-git", "diff", "vcs"]
+}

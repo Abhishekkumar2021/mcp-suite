@@ -1,0 +1,56 @@
+{
+  "name": "@abhishekmcp/git",
+  "version": "0.1.0",
+  "description": "MCP server for local Git repositories — status, log, diff, file history, branches, and gated stage/commit — pure-JS (isomorphic-git), no git binary, from any MCP client.",
+  "mcpName": "io.github.Abhishekkumar2021/git",
+  "type": "module",
+  "bin": {
+    "mcp-git": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "git",
+    "isomorphic-git",
+    "claude"
+  ],
+  "author": "Abhishek (https://github.com/Abhishekkumar2021)",
+  "license": "MIT",
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/git#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhishekkumar2021/mcp-suite.git",
+    "directory": "servers/git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "diff": "^9.0.0",
+    "isomorphic-git": "^1.27.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

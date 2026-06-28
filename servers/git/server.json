@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Abhishekkumar2021/git",
+  "title": "Git",
+  "description": "Local Git via MCP: status, log, diff, file history, branches, and gated stage/commit. Pure-JS.",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/git#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@abhishekmcp/git",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "npx",
+      "environmentVariables": [
+        {
+          "name": "GIT_ROOTS",
+          "description": "Allowed repo root directories (comma-separated). Required — the server refuses to start without it.",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "GIT_WRITABLE",
+          "description": "Set to 1 or true to enable local write tools (stage/commit/branch/checkout).",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

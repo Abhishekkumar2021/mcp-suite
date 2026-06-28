@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@abhishekmcp/git"],
+      "env": {
+        "GIT_ROOTS": "${GIT_ROOTS}"
+      }
+    }
+  }
+}

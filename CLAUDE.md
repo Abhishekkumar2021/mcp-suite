@@ -98,6 +98,17 @@ paginate to `MAX_ITEMS` (300) and report truncation. `log.ts` adds structured lo
 writes (`GITHUB_AUDIT_LOG`) and a `redact()` (strips token patterns) applied to all tool output. New
 env: `GITHUB_TIMEOUT_MS`, `GITHUB_API_URL`, `GITHUB_AUDIT_LOG`.
 
+## Server architecture: `git`
+
+`servers/git/src/` wraps **isomorphic-git** (pure-JS; no `git` binary) behind the same sandbox pattern as
+`files`: `sandbox.ts` `resolveRepo()` confines every `repo` arg to `GIT_ROOTS` (realpath containment).
+`repo.ts` holds the isomorphic-git wrappers; notable gaps handled in-house — **no high-level diff** (built
+via `git.walk()` over two trees + `diff.createPatch` per file, size-capped) and **no blame** (omitted).
+`git_show` resolves a ref/short-oid via `resolveRef`→`expandOid`, and lists all files for a root commit.
+Write tools (stage/unstage/commit/branch/checkout) are registered only when `GIT_WRITABLE=1`; remote ops
+(clone/fetch/push) are deferred (need credentials). Tests are self-contained — they build a real repo with
+isomorphic-git itself, so no system git is needed in CI.
+
 ## Distribution (per server)
 
 Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:

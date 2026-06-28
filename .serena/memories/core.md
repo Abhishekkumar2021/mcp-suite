@@ -7,6 +7,7 @@ npm-workspaces monorepo of independent MCP servers (TypeScript, ESM). Each `serv
 - `servers/notes/` — markdown notes server; the reference implementation. See `mem:notes/core`.
 - `servers/files/` — sandboxed filesystem server (2nd server). See `mem:files/core`.
 - `servers/github/` — GitHub API server, first auth/secrets server (3rd). See `mem:github/core`.
+- `servers/git/` — local Git server via isomorphic-git (4th). See `mem:git/core`.
 - `tsconfig.base.json` — shared TS config; each server's `tsconfig.json` extends it.
 - `.github/workflows/{ci,publish}.yml` — CI = build only; publish = release-tag-driven OIDC. See `mem:task_completion`.
 - `NAMING.md` — enforced naming scheme (slug/package/bin/tag). See `mem:conventions`.

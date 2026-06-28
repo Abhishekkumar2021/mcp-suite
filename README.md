@@ -12,6 +12,7 @@
 [![@abhishekmcp/notes](https://img.shields.io/npm/v/@abhishekmcp/notes?label=%40abhishekmcp%2Fnotes&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/notes)
 [![@abhishekmcp/files](https://img.shields.io/npm/v/@abhishekmcp/files?label=%40abhishekmcp%2Ffiles&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/files)
 [![@abhishekmcp/github](https://img.shields.io/npm/v/@abhishekmcp/github?label=%40abhishekmcp%2Fgithub&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/github)
+[![@abhishekmcp/git](https://img.shields.io/npm/v/@abhishekmcp/git?label=%40abhishekmcp%2Fgit&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/git)
 
 </div>
 
@@ -37,6 +38,7 @@ Each server lives in its own folder under [`servers/`](servers) and publishes to
 | [`notes`](servers/notes) | Local markdown notes: ranked full-text **and semantic** search, tags, todos, a `[[wiki-link]]` knowledge graph, daily notes + templates, and slash-command workflows (prompts) | ✅ Stable |
 | [`files`](servers/files) | Sandboxed local filesystem: read, glob + content search, token-efficient edits, copy/move, soft-delete trash, zip, checksums, and dedup | ✅ Stable |
 | [`github`](servers/github) | GitHub: search repos/code/issues, read repos/issues/PRs/files, notifications, create issues — OAuth device flow or token | ✅ Stable |
+| [`git`](servers/git) | Local Git: status, log, diff, file history, branches/tags, read-at-ref, and gated stage/commit — pure-JS, no git binary | ✅ Stable |
 
 _More on the way: a Spotify controller, and others._
 
@@ -60,6 +62,7 @@ server's README for full config.
 | [`notes`](servers/notes) | `/plugin install notes` | `npx -y @abhishekmcp/notes` | drag `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) | `io.github.Abhishekkumar2021/notes` |
 | [`files`](servers/files) | `/plugin install files` | `npx -y @abhishekmcp/files` | drag `files-*.mcpb` | `io.github.Abhishekkumar2021/files` |
 | [`github`](servers/github) | `/plugin install github` | `npx -y @abhishekmcp/github` | — | `io.github.Abhishekkumar2021/github` |
+| [`git`](servers/git) | `/plugin install git` | `npx -y @abhishekmcp/git` | — | `io.github.Abhishekkumar2021/git` |
 
 > `notes` defaults to `~/notes`; `files` **requires** `FS_ROOTS` (the directories it may touch). MCPB
 > bundles install via Claude Desktop → Settings → Extensions.
