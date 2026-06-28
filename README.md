@@ -9,6 +9,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-43853d.svg)](https://nodejs.org)
 
+[![@abhishekmcp/notes](https://img.shields.io/npm/v/@abhishekmcp/notes?label=%40abhishekmcp%2Fnotes&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/notes)
+[![@abhishekmcp/files](https://img.shields.io/npm/v/@abhishekmcp/files?label=%40abhishekmcp%2Ffiles&color=cb3837&logo=npm)](https://www.npmjs.com/package/@abhishekmcp/files)
+
 </div>
 
 Each server lives in its own folder under [`servers/`](servers) and publishes to npm as an independent package, while sharing tooling through an npm workspace. Connect them to any MCP client — Claude Desktop, Claude Code, Cursor, and more.
@@ -17,7 +20,9 @@ Each server lives in its own folder under [`servers/`](servers) and publishes to
 
 - [Servers](#servers)
 - [Quickstart](#quickstart)
+- [Install](#install)
 - [Connecting to a client](#connecting-to-a-client)
+- [Architecture & conventions](#architecture--conventions)
 - [Development](#development)
 - [Adding a new server](#adding-a-new-server)
 - [Publishing](#publishing)
@@ -44,12 +49,17 @@ npm run build    # builds every server
 
 ## Install
 
-The **notes** server is distributed several ways (see its [README](servers/notes#readme) for details):
+Both servers ship through every common channel. Pick whichever fits your client (see each server's
+README for full config):
 
-- **Claude Code plugin:** `/plugin marketplace add Abhishekkumar2021/mcp-suite` then `/plugin install notes`
-- **npm (any client):** `npx -y @abhishekmcp/notes`
-- **Claude Desktop (MCPB):** drag the `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) onto Settings → Extensions
-- **MCP registry:** `io.github.Abhishekkumar2021/notes`
+| Method | notes | files |
+|--------|-------|-------|
+| **Claude Code plugin** | `/plugin marketplace add Abhishekkumar2021/mcp-suite` → `/plugin install notes` | …→ `/plugin install files` |
+| **npm (any client)** | `npx -y @abhishekmcp/notes` | `npx -y @abhishekmcp/files` |
+| **Claude Desktop (MCPB)** | drag `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) onto Settings → Extensions | drag `files-*.mcpb` |
+| **MCP registry** | `io.github.Abhishekkumar2021/notes` | `io.github.Abhishekkumar2021/files` |
+
+> `notes` defaults to `~/notes`; `files` **requires** `FS_ROOTS` (the directories it may touch).
 
 ## Connecting to a client
 
@@ -73,6 +83,23 @@ Or with Claude Desktop (`claude_desktop_config.json`):
 }
 ```
 
+## Architecture & conventions
+
+A few principles hold across every server:
+
+- **Pure-JS, no native dependencies.** Servers run via `npx`/MCPB on any machine, so anything needing a
+  native build is off-limits (e.g. `notes` uses MiniSearch + WebAssembly embeddings instead of SQLite;
+  `files` uses `fast-glob` instead of ripgrep). `npm audit` stays clean.
+- **Sandbox-first, layered design.** Each server keeps a thin `index.ts` (tool registration only) over
+  focused modules, with a single security boundary every path must pass through (realpath-containment,
+  symlink-escape rejection, atomic writes).
+- **Token-efficient by default.** Pagination, head/tail/section reads, snippets, and compact graph refs
+  keep tool output small.
+- **Automated, hands-off releases.** A GitHub Release tagged `<server>-v<version>` publishes to **npm
+  (with provenance), the official MCP registry, and attaches an MCPB bundle** — all via OIDC, no secrets.
+- **Tested in CI.** Each server ships a committed `node:test` suite (unit + integration/security) run on
+  every push.
+
 ## Development
 
 This is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/workspaces) monorepo.
@@ -81,6 +108,7 @@ This is an [npm workspaces](https://docs.npmjs.com/cli/using-npm/workspaces) mon
 npm install                      # install all workspace dependencies (run once at the root)
 npm run build                    # build every server
 npm run build -w servers/notes   # build a single server
+npm test --workspaces --if-present  # run each server's test suite
 npm run clean                    # remove all build output
 ```
 
@@ -95,10 +123,14 @@ All servers follow the [naming standard](NAMING.md) (`@abhishekmcp/<slug>`). See
 
 ## Publishing
 
-Each server is published independently:
+Releases are automated. Cutting a GitHub Release tagged `<server>-v<version>` triggers
+[`publish.yml`](.github/workflows/publish.yml), which — authenticated entirely via GitHub OIDC (no
+`NPM_TOKEN`) — publishes the package to **npm with provenance**, registers it on the **official MCP
+registry**, and **builds + attaches the MCPB bundle** to the release.
 
 ```bash
-npm publish -w servers/<name> --access public
+# bump servers/<name>/package.json, commit, then:
+gh release create <name>-v<version> --title "<name> v<version>" --notes "…"
 ```
 
 ## Contributing

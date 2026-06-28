@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "files",
+  "display_name": "Files",
+  "version": "0.2.0",
+  "description": "Sandboxed local filesystem: read, search, edit, copy, archive, and safely manage files within an allowed directory.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/files#readme",
+  "documentation": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/files#readme",
+  "repository": { "type": "git", "url": "https://github.com/Abhishekkumar2021/mcp-suite" },
+  "license": "MIT",
+  "keywords": ["filesystem", "files", "search", "editor", "productivity"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/dist/index.js"],
+      "env": {
+        "FS_ROOTS": "${user_config.rootDir}",
+        "FS_READONLY": "${user_config.readOnly}"
+      }
+    }
+  },
+  "user_config": {
+    "rootDir": {
+      "type": "directory",
+      "title": "Allowed directory",
+      "description": "The folder this server may read and modify (it is sandboxed to this directory).",
+      "default": "${HOME}",
+      "required": true
+    },
+    "readOnly": {
+      "type": "boolean",
+      "title": "Read-only",
+      "description": "Disable all file-modifying tools (browse/search only).",
+      "default": false,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}
