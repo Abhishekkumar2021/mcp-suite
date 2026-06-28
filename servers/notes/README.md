@@ -85,11 +85,22 @@ All filesystem access is sandboxed to the notes directory:
 
 ## Usage
 
-### Claude Code
+### Claude Code — plugin (easiest)
+
+```
+/plugin marketplace add Abhishekkumar2021/mcp-suite
+/plugin install notes
+```
+
+### Claude Code — manual
 
 ```bash
 claude mcp add notes --env NOTES_DIR=$HOME/notes -- npx -y @abhishekmcp/notes
 ```
+
+### Claude Desktop — MCPB (one-click, no Node required)
+
+Download `notes-<version>.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) and drag it onto Claude Desktop → Settings → Extensions. A folder picker lets you choose your notes directory.
 
 ### Claude Desktop
 

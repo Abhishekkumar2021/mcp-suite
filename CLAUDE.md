@@ -59,6 +59,14 @@ Two cross-cutting rules this server models for any future server:
 - **Read/write tool split:** when `NOTES_READONLY=1`, `index.ts` simply does not register the mutating tools, so they're absent from `tools/list`. Mirror this for any server with side effects.
 - **Index built before serving:** `main()` `await`s `buildIndex()` *before* `server.connect(transport)`.
 
+## Distribution (the `notes` server)
+
+Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:
+- **Claude Code plugin:** root `.claude-plugin/marketplace.json` lists `plugins/notes/` (manifest + `.mcp.json`). The `.mcp.json` runs `npx -y @abhishekmcp/notes` with **no `env` block** — Claude Code's MCP config does NOT support bash `${VAR:-default}` expansion, so rely on the server's built-in `~/notes` default.
+- **MCPB bundle:** `servers/notes/mcpb/manifest.json` + `npm run build:mcpb -w servers/notes` (script copies prod `node_modules` wholesale — onnxruntime-web's `.wasm` can't be esbuild-bundled). Output `dist-mcpb/notes-<ver>.mcpb` is gitignored; attach to the GitHub release.
+- **Official MCP registry:** `servers/notes/server.json` (name `io.github.Abhishekkumar2021/notes`). Requires `mcpName` in the **published** `package.json` (added in 0.4.1) and `mcp-publisher login github` (human OAuth) before `mcp-publisher publish`.
+- **Skipped Smithery** on purpose — it's HTTP-container-only; this server is local-file stdio. Glama/mcp.so cover stdio discovery.
+
 ## Adding a new server
 
 `servers/<slug>/` with its own `package.json` (`name`, `bin: { "mcp-<slug>": "dist/index.js" }`, `publishConfig`), a `tsconfig.json` that `extends: "../../tsconfig.base.json"`, source in `src/`, and a `README.md` documenting tools + config. Run `npm install` at root to link the workspace, then add a row to the Servers table in the root `README.md`. Give every tool a `title`, `description`, and Zod `inputSchema`; mark destructive tools with `annotations: { destructiveHint: true }`.

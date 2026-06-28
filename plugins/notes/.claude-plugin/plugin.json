@@ -1,0 +1,10 @@
+{
+  "name": "notes",
+  "version": "0.4.1",
+  "description": "Local markdown notes for any MCP client: ranked + semantic search, tags, todos, a wiki-link knowledge graph, daily notes, templates, and slash-command workflows. Runs the published @abhishekmcp/notes server via npx.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/plugins/notes#readme",
+  "repository": "https://github.com/Abhishekkumar2021/mcp-suite",
+  "license": "MIT",
+  "keywords": ["notes", "markdown", "search", "knowledge-graph", "productivity"]
+}

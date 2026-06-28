@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Abhishekkumar2021/notes",
+  "title": "Notes",
+  "description": "Local markdown notes: ranked + semantic search, tags, todos, a wiki-link knowledge graph, daily notes, templates, and slash-command workflows.",
+  "version": "0.4.1",
+  "repository": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/notes#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@abhishekmcp/notes",
+      "version": "0.4.1",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "npx",
+      "environmentVariables": [
+        {
+          "name": "NOTES_DIR",
+          "description": "Directory containing your markdown notes (defaults to ~/notes).",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "NOTES_READONLY",
+          "description": "Set to 1 or true to disable all note-modifying tools.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "NOTES_MODEL_DIR",
+          "description": "Where the semantic-search embedding model is cached.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

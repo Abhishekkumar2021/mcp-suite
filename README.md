@@ -41,6 +41,15 @@ npm install      # installs deps for every workspace
 npm run build    # builds every server
 ```
 
+## Install
+
+The **notes** server is distributed several ways (see its [README](servers/notes#readme) for details):
+
+- **Claude Code plugin:** `/plugin marketplace add Abhishekkumar2021/mcp-suite` then `/plugin install notes`
+- **npm (any client):** `npx -y @abhishekmcp/notes`
+- **Claude Desktop (MCPB):** drag the `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) onto Settings → Extensions
+- **MCP registry:** `io.github.Abhishekkumar2021/notes`
+
 ## Connecting to a client
 
 Each server's README has full configuration instructions. As an example, to use the **notes** server with Claude Code:

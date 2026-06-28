@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "notes",
+  "display_name": "Notes",
+  "version": "0.4.1",
+  "description": "Local markdown notes: ranked + semantic search, tags, todos, a wiki-link knowledge graph, daily notes, templates, and slash-command workflows.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/notes#readme",
+  "documentation": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/notes#readme",
+  "repository": { "type": "git", "url": "https://github.com/Abhishekkumar2021/mcp-suite" },
+  "license": "MIT",
+  "keywords": ["notes", "markdown", "search", "semantic", "knowledge-graph", "productivity"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/dist/index.js"],
+      "env": {
+        "NOTES_DIR": "${user_config.notesDir}",
+        "NOTES_READONLY": "${user_config.readOnly}",
+        "NOTES_MODEL_DIR": "${user_config.modelDir}"
+      }
+    }
+  },
+  "user_config": {
+    "notesDir": {
+      "type": "directory",
+      "title": "Notes directory",
+      "description": "Folder containing your markdown notes.",
+      "default": "${HOME}/notes",
+      "required": true
+    },
+    "readOnly": {
+      "type": "boolean",
+      "title": "Read-only",
+      "description": "Disable all note-modifying tools (safe for sharing a vault).",
+      "default": false,
+      "required": false
+    },
+    "modelDir": {
+      "type": "directory",
+      "title": "Embedding model cache (optional)",
+      "description": "Where the semantic-search model is cached. Leave empty for the default (~/.cache/mcp-notes/models).",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}

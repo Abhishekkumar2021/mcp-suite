@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "mcp-suite",
+  "version": "1.0.0",
+  "description": "MCP servers from the mcp-suite project, installable as Claude Code plugins.",
+  "owner": {
+    "name": "Abhishek",
+    "url": "https://github.com/Abhishekkumar2021"
+  },
+  "plugins": [
+    {
+      "name": "notes",
+      "source": "./plugins/notes",
+      "description": "Local markdown notes: ranked + semantic search, tags, todos, a wiki-link knowledge graph, daily notes, templates, and slash-command workflows.",
+      "category": "productivity",
+      "version": "0.4.1",
+      "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" }
+    }
+  ]
+}
