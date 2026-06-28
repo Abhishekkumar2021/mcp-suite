@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Abhishekkumar2021/files",
+  "title": "Files",
+  "description": "Sandboxed local filesystem: read, search, edit, copy, archive, and safely manage files.",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/files#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@abhishekmcp/files",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "npx",
+      "environmentVariables": [
+        {
+          "name": "FS_ROOTS",
+          "description": "Allowed root directories (comma-separated). Required — the server refuses to start without it.",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "FS_READONLY",
+          "description": "Set to 1 or true to disable all file-modifying tools.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

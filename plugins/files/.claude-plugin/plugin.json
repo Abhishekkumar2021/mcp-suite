@@ -1,0 +1,10 @@
+{
+  "name": "files",
+  "version": "0.1.0",
+  "description": "Sandboxed local filesystem for any MCP client: read, search (glob + grep), token-efficient edits, copy/move, soft-delete trash, zip, checksums, and dedup. Runs the published @abhishekmcp/files server via npx.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/plugins/files#readme",
+  "repository": "https://github.com/Abhishekkumar2021/mcp-suite",
+  "license": "MIT",
+  "keywords": ["filesystem", "files", "search", "grep", "editor"]
+}

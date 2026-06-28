@@ -59,7 +59,20 @@ Two cross-cutting rules this server models for any future server:
 - **Read/write tool split:** when `NOTES_READONLY=1`, `index.ts` simply does not register the mutating tools, so they're absent from `tools/list`. Mirror this for any server with side effects.
 - **Index built before serving:** `main()` `await`s `buildIndex()` *before* `server.connect(transport)`.
 
-## Distribution (the `notes` server)
+## Server architecture: `files`
+
+`servers/files/src/` follows the same layered, sandbox-first pattern as `notes`. The security core is
+`sandbox.ts`: **all** paths go through `resolveInside` (lexical + realpath containment against the
+`FS_ROOTS` set; rejects symlinks escaping the sandbox), writes/edits/deletes additionally refuse to act
+through a symlink, and writes are atomic. Logic is split `read`/`search`/`edit`/`mutate`/`archive`;
+`index.ts` is thin and omits write tools when `FS_READONLY` is set. Notable choices: **deletes are soft**
+(moved to `.mcp-trash`, restorable); `edit_file`/`edit_lines` are token-efficient (unique find/replace,
+hash-guarded line ranges, `dryRun` diffs); `unzip` is zip-slip protected; search is **pure-JS**
+(`fast-glob` + streaming grep — ripgrep was rejected as native). **`FS_ROOTS` is required** (refuses to
+boot without it); the MCP `roots` protocol is deprecated (SEP-2577) + buggy in Claude Code, so it's only
+a best-effort augment after connect, never the sole source.
+
+## Distribution (per server)
 
 Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:
 - **Claude Code plugin:** root `.claude-plugin/marketplace.json` lists `plugins/notes/` (manifest + `.mcp.json`). The `.mcp.json` runs `npx -y @abhishekmcp/notes` with **no `env` block** — Claude Code's MCP config does NOT support bash `${VAR:-default}` expansion, so rely on the server's built-in `~/notes` default.

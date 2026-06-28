@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "files": {
+      "command": "npx",
+      "args": ["-y", "@abhishekmcp/files"],
+      "env": {
+        "FS_ROOTS": "${FS_ROOTS}"
+      }
+    }
+  }
+}
