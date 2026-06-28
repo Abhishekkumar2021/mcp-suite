@@ -8,6 +8,8 @@
 import { createHash } from "node:crypto";
 import { createPatch } from "diff";
 import { assertWritable, atomicWrite, displayPath, readBytes, resolveInside } from "./sandbox.js";
+import { decodeText, encodeText } from "./encoding.js";
+import { assertNotDenied } from "./denylist.js";
 
 export interface EditResult {
   applied: boolean;
@@ -32,6 +34,7 @@ export async function writeFile(
 ): Promise<EditResult> {
   assertWritable();
   const abs = await resolveInside(p);
+  await assertNotDenied(abs);
   let before = "";
   let existed = false;
   try {
@@ -61,15 +64,17 @@ export async function editFile(
 ): Promise<EditResult> {
   assertWritable();
   const abs = await resolveInside(p);
-  const before = (await readBytes(abs)).toString("utf8");
+  await assertNotDenied(abs);
+  const { text: raw, bom, eol } = decodeText(await readBytes(abs)); // throws on binary
+  const before = raw.replace(/\r\n/g, "\n"); // edit in LF space; restore EOL on write
   const count = before.split(oldText).length - 1;
   if (count === 0) throw new Error("oldText not found in the file.");
   if (count > 1) throw new Error(`oldText matches ${count} times — add surrounding context to make it unique.`);
   const after = before.replace(oldText, newText);
   const diff = patch(displayPath(abs), before, after);
   if (opts.dryRun) return { applied: false, dryRun: true, diff, message: "Dry run — no changes written." };
-  await atomicWrite(abs, after);
-  return { applied: true, dryRun: false, diff, message: `Edited "${displayPath(abs)}".` };
+  await atomicWrite(abs, encodeText(after, { bom, eol }));
+  return { applied: true, dryRun: false, diff, message: `Edited "${displayPath(abs)}" (preserved ${eol === "\r\n" ? "CRLF" : "LF"}).` };
 }
 
 /**
@@ -85,7 +90,9 @@ export async function editLines(
 ): Promise<EditResult & { hash?: string }> {
   assertWritable();
   const abs = await resolveInside(p);
-  const before = (await readBytes(abs)).toString("utf8");
+  await assertNotDenied(abs);
+  const { text: raw, bom, eol } = decodeText(await readBytes(abs)); // throws on binary
+  const before = raw.replace(/\r\n/g, "\n");
   const lines = before.split("\n");
   if (startLine < 1 || endLine < startLine || startLine > lines.length) {
     throw new Error(`Invalid line range ${startLine}-${endLine} (file has ${lines.length} lines).`);
@@ -95,9 +102,9 @@ export async function editLines(
   if (opts.expectedHash && sha256(current) !== opts.expectedHash) {
     throw new Error("Stale edit: the current line range doesn't match expectedHash (re-read the file).");
   }
-  const after = [...lines.slice(0, startLine - 1), ...newContent.split("\n"), ...lines.slice(end)].join("\n");
+  const after = [...lines.slice(0, startLine - 1), ...newContent.split(/\r?\n/), ...lines.slice(end)].join("\n");
   const diff = patch(displayPath(abs), before, after);
   if (opts.dryRun) return { applied: false, dryRun: true, diff, message: "Dry run — no changes written.", hash: sha256(current) };
-  await atomicWrite(abs, after);
+  await atomicWrite(abs, encodeText(after, { bom, eol }));
   return { applied: true, dryRun: false, diff, message: `Replaced lines ${startLine}-${end} in "${displayPath(abs)}".` };
 }

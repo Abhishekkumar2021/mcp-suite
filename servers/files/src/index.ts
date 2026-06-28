@@ -19,6 +19,8 @@ import { findFiles, searchContent } from "./search.js";
 import { editFile, editLines, writeFile } from "./edit.js";
 import { copy, createDir, del, emptyTrash, listTrash, move, restore } from "./mutate.js";
 import { findDuplicates, hashFile, listArchive, unzip, zip } from "./archive.js";
+import { guard } from "./runtime.js";
+import { audit } from "./log.js";
 
 const server = new McpServer({ name: "mcp-files-server", version: VERSION });
 
@@ -26,15 +28,60 @@ const text = (value: string) => ({ content: [{ type: "text" as const, text: valu
 const json = (v: unknown) => text(JSON.stringify(v, null, 2));
 const fail = (err: unknown) => text(`Error: ${(err as Error).message}`);
 
+type Handler = (args: any, extra?: any) => Promise<{ content: Array<Record<string, unknown>> }>;
+
+/** Extract path-like fields from tool args for audit logging. */
+function collectPaths(a: any): string[] {
+  if (!a) return [];
+  const out: string[] = [];
+  for (const k of ["path", "source", "destination", "dest", "id"]) if (typeof a[k] === "string") out.push(a[k]);
+  if (Array.isArray(a.sources)) out.push(...a.sources);
+  if (Array.isArray(a.paths)) out.push(...a.paths);
+  return out;
+}
+
+/** Register a tool, wrapping the handler with the concurrency+timeout guard. */
+function addTool(name: string, def: unknown, handler: Handler): void {
+  (server.registerTool as any)(name, def, async (args: any, extra: any) => {
+    try {
+      return await guard(() => handler(args, extra));
+    } catch (err) {
+      return fail(err);
+    }
+  });
+}
+
+/** Like addTool, but also writes an audit record (mutating tools). */
+function addWriteTool(name: string, def: unknown, handler: Handler): void {
+  (server.registerTool as any)(name, def, async (args: any, extra: any) => {
+    let res;
+    try {
+      res = await guard(() => handler(args, extra));
+    } catch (err) {
+      res = fail(err);
+    }
+    const txt = String(res?.content?.[0]?.text ?? "");
+    const errored = txt.startsWith("Error:");
+    await audit({
+      tool: name,
+      paths: collectPaths(args),
+      dryRun: !!args?.dryRun,
+      outcome: errored ? "error" : "ok",
+      detail: errored ? txt : undefined,
+    });
+    return res;
+  });
+}
+
 // --- Read & search tools (always registered) -----------------------------
 
-server.registerTool(
+addTool(
   "list_roots",
   { title: "List roots", description: "List the sandbox root directories this server may access.", inputSchema: {} },
   async () => text(getRoots().join("\n") || "(no roots)"),
 );
 
-server.registerTool(
+addTool(
   "read_file",
   {
     title: "Read file",
@@ -50,7 +97,11 @@ server.registerTool(
   async ({ path, head, tail, offset, limit }) => {
     try {
       const r = await readFile(path, { head, tail, offset, limit });
-      const note = r.truncated ? `\n\n[showing ${r.returnedLines}/${r.totalLines} lines]` : "";
+      const note = r.truncated
+        ? r.totalLines >= 0
+          ? `\n\n[showing ${r.returnedLines}/${r.totalLines} lines]`
+          : `\n\n[showing first ${r.returnedLines} lines; file has more]`
+        : "";
       return text(r.text + note);
     } catch (err) {
       return fail(err);
@@ -58,7 +109,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "read_media",
   {
     title: "Read media file",
@@ -77,7 +128,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "read_multiple",
   {
     title: "Read multiple files",
@@ -98,7 +149,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "stat",
   {
     title: "Stat",
@@ -114,7 +165,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "list_dir",
   {
     title: "List directory",
@@ -137,7 +188,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "tree",
   {
     title: "Directory tree",
@@ -157,7 +208,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "changed_since",
   {
     title: "Changed since",
@@ -180,7 +231,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "find_files",
   {
     title: "Find files (glob)",
@@ -204,7 +255,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "search_content",
   {
     title: "Search content (grep)",
@@ -232,7 +283,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "file_hash",
   {
     title: "File hash",
@@ -248,7 +299,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "find_duplicates",
   {
     title: "Find duplicates",
@@ -266,7 +317,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "list_archive",
   {
     title: "List archive",
@@ -283,7 +334,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+addTool(
   "list_trash",
   {
     title: "List trash",
@@ -300,7 +351,7 @@ server.registerTool(
 // --- Mutating tools (omitted when FS_READONLY) ---------------------------
 
 if (!isReadOnly()) {
-  server.registerTool(
+  addWriteTool(
     "write_file",
     {
       title: "Write file",
@@ -322,7 +373,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "edit_file",
     {
       title: "Edit file (find/replace)",
@@ -344,7 +395,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "edit_lines",
     {
       title: "Edit lines (range)",
@@ -368,7 +419,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "create_dir",
     { title: "Create directory", description: "Create a directory (and parents). Supports dryRun.", inputSchema: { path: z.string(), dryRun: z.boolean().optional() } },
     async ({ path, dryRun }) => {
@@ -380,7 +431,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "move",
     { title: "Move/rename", description: "Move or rename a file/directory. No-clobber unless overwrite. Supports dryRun.", inputSchema: { source: z.string(), destination: z.string(), overwrite: z.boolean().optional(), dryRun: z.boolean().optional() } },
     async ({ source, destination, overwrite, dryRun }) => {
@@ -392,7 +443,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "copy",
     { title: "Copy", description: "Recursively copy a file/directory. Supports dryRun.", inputSchema: { source: z.string(), destination: z.string(), overwrite: z.boolean().optional(), dryRun: z.boolean().optional() } },
     async ({ source, destination, overwrite, dryRun }) => {
@@ -404,7 +455,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "delete",
     {
       title: "Delete (to trash)",
@@ -421,7 +472,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "restore",
     { title: "Restore from trash", description: "Restore a soft-deleted item by its trash id (see list_trash).", inputSchema: { id: z.string(), overwrite: z.boolean().optional() } },
     async ({ id, overwrite }) => {
@@ -433,7 +484,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "empty_trash",
     { title: "Empty trash", description: "Permanently delete all trashed items. Supports dryRun.", inputSchema: { dryRun: z.boolean().optional() }, annotations: { destructiveHint: true } },
     async ({ dryRun }) => {
@@ -445,7 +496,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "zip",
     { title: "Create zip", description: "Create a .zip archive from one or more source paths. Supports dryRun.", inputSchema: { sources: z.array(z.string()), dest: z.string().describe("Output .zip path"), dryRun: z.boolean().optional() } },
     async ({ sources, dest, dryRun }) => {
@@ -457,7 +508,7 @@ if (!isReadOnly()) {
     },
   );
 
-  server.registerTool(
+  addWriteTool(
     "unzip",
     { title: "Extract zip", description: "Extract a .zip into a directory (zip-slip protected). Supports dryRun + overwrite.", inputSchema: { path: z.string().describe("Path to .zip"), dest: z.string().describe("Destination directory"), overwrite: z.boolean().optional(), dryRun: z.boolean().optional() } },
     async ({ path, dest, overwrite, dryRun }) => {

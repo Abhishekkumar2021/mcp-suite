@@ -4,10 +4,13 @@
  * All paths flow through the sandbox; reads of symlinks that resolve outside the
  * roots are rejected by `resolveInside`.
  */
-import { promises as fs } from "node:fs";
+import { promises as fs, createReadStream } from "node:fs";
+import readline from "node:readline";
 import path from "node:path";
 import { MAX_DEPTH, MAX_RESULTS, TRASH_DIR } from "./config.js";
 import { displayPath, readBytes, resolveInside } from "./sandbox.js";
+import { decodeText } from "./encoding.js";
+import { assertNotDenied, isDenied } from "./denylist.js";
 
 const MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
@@ -23,22 +26,41 @@ export interface ReadResult {
   returnedLines: number;
 }
 
+/** Stream the first `n` lines without loading the whole file (works on huge files). */
+async function streamHead(abs: string, n: number): Promise<ReadResult> {
+  const rl = readline.createInterface({ input: createReadStream(abs, { encoding: "utf8" }), crlfDelay: Infinity });
+  const out: string[] = [];
+  let more = false;
+  for await (const line of rl) {
+    if (out.length < n) out.push(line);
+    else {
+      more = true;
+      break;
+    }
+  }
+  rl.close();
+  if (out.length && out[0].charCodeAt(0) === 0xfeff) out[0] = out[0].slice(1); // strip BOM
+  return { text: out.join("\n"), truncated: more, totalLines: more ? -1 : out.length, returnedLines: out.length };
+}
+
 /** Read a text file, optionally a head/tail or 1-based line window. */
 export async function readFile(
   p: string,
   opts: { head?: number; tail?: number; offset?: number; limit?: number } = {},
 ): Promise<ReadResult> {
   const abs = await resolveInside(p);
-  const text = (await readBytes(abs)).toString("utf8");
-  const lines = text.split("\n");
+  await assertNotDenied(abs);
+  // Head is streamed (early-stop) so it works even on files larger than the read cap.
+  if (opts.head != null && opts.tail == null && opts.offset == null && opts.limit == null) {
+    return streamHead(abs, opts.head);
+  }
+  const { text } = decodeText(await readBytes(abs)); // strips BOM; throws on binary
+  const lines = text.split(/\r?\n/);
   const total = lines.length;
 
   let slice = lines;
   let truncated = false;
-  if (opts.head != null) {
-    slice = lines.slice(0, opts.head);
-    truncated = slice.length < total;
-  } else if (opts.tail != null) {
+  if (opts.tail != null) {
     slice = lines.slice(Math.max(0, total - opts.tail));
     truncated = slice.length < total;
   } else if (opts.offset != null || opts.limit != null) {
@@ -59,6 +81,7 @@ export interface MediaResult {
 /** Read a binary/media file as base64 with a guessed MIME type. */
 export async function readMedia(p: string): Promise<MediaResult> {
   const abs = await resolveInside(p);
+  await assertNotDenied(abs);
   const buf = await readBytes(abs);
   const ext = path.extname(abs).slice(1).toLowerCase();
   return { base64: buf.toString("base64"), mimeType: MIME[ext] ?? "application/octet-stream", bytes: buf.length };
@@ -120,6 +143,7 @@ export async function listDir(
     } catch {
       // ignore unstatable entry
     }
+    if (await isDenied(path.join(abs, d.name))) continue; // hide secrets
     const type = d.isDirectory() ? "dir" : d.isSymbolicLink() ? "symlink" : d.isFile() ? "file" : "other";
     entries.push({ name: d.name, type, size, mtimeMs });
   }
@@ -157,6 +181,7 @@ export async function tree(
     for (let i = 0; i < dirents.length; i++) {
       const d = dirents[i];
       if (exclude.has(d.name) || d.name === TRASH_DIR) continue;
+      if (await isDenied(path.join(dir, d.name))) continue; // hide secrets
       if (count >= MAX_RESULTS) {
         capped = true;
         return;
@@ -201,6 +226,7 @@ export async function changedSince(p: string, sinceMs: number): Promise<{ files:
       if (d.isDirectory()) {
         await walk(full, depth + 1);
       } else if (d.isFile()) {
+        if (await isDenied(full)) continue; // hide secrets
         try {
           const st = await fs.lstat(full);
           if (st.mtimeMs >= sinceMs) {

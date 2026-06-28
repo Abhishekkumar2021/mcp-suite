@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 
 /** Server version (kept in lockstep with package.json + index.ts). */
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 /** Refuse to read any single file larger than this (memory / context guard). */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
@@ -41,4 +41,27 @@ export function getConfiguredRoots(): string[] {
 export function isReadOnly(): boolean {
   const v = (process.env.FS_READONLY ?? "").toLowerCase();
   return v === "1" || v === "true";
+}
+
+/** When true, the secret denylist is disabled (escape hatch). */
+export function allowSecrets(): boolean {
+  const v = (process.env.FS_ALLOW_SECRETS ?? "").toLowerCase();
+  return v === "1" || v === "true";
+}
+
+/** Optional path to append a JSON-lines audit log of every mutation. */
+export function getAuditLogPath(): string | undefined {
+  return process.env.FS_AUDIT_LOG?.trim() || undefined;
+}
+
+/** Per-operation timeout (ms). */
+export function opTimeoutMs(): number {
+  const n = Number(process.env.FS_OP_TIMEOUT_MS);
+  return Number.isFinite(n) && n > 0 ? n : 30_000;
+}
+
+/** Max concurrent tool executions. */
+export function maxConcurrency(): number {
+  const n = Number(process.env.FS_MAX_CONCURRENCY);
+  return Number.isFinite(n) && n > 0 ? n : 8;
 }

@@ -3,17 +3,19 @@
  * file checksums, and duplicate detection. Unzip validates that every entry stays
  * inside the destination directory before writing.
  */
-import { promises as fs } from "node:fs";
+import { promises as fs, createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { zipSync, unzipSync } from "fflate";
 import { MAX_RESULTS, TRASH_DIR } from "./config.js";
 import { assertWritable, atomicWrite, displayPath, readBytes, resolveInside } from "./sandbox.js";
+import { isDenied } from "./denylist.js";
 
 /** Collect files under `abs` (recursively), keyed by a name relative to `baseForName`. */
 async function collectFiles(abs: string, baseForName: string, out: Record<string, Uint8Array>): Promise<void> {
   const st = await fs.lstat(abs);
   if (st.isSymbolicLink()) return; // never archive through symlinks
+  if (await isDenied(abs)) return; // never archive secret files
   if (st.isFile()) {
     out[path.relative(baseForName, abs).split(path.sep).join("/")] = new Uint8Array(await fs.readFile(abs));
     return;
@@ -94,10 +96,16 @@ export async function listArchive(zipPath: string): Promise<Array<{ name: string
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Compute a checksum of a file. */
+/** Compute a checksum of a file by streaming it (no whole-file load). */
 export async function hashFile(p: string, algo: "sha256" | "sha1" | "md5" = "sha256"): Promise<string> {
   const abs = await resolveInside(p);
-  return createHash(algo).update(await readBytes(abs)).digest("hex");
+  return new Promise<string>((resolve, reject) => {
+    const h = createHash(algo);
+    const stream = createReadStream(abs);
+    stream.on("error", reject);
+    stream.on("data", (chunk) => h.update(chunk));
+    stream.on("end", () => resolve(h.digest("hex")));
+  });
 }
 
 export interface DuplicateGroup {
@@ -124,6 +132,7 @@ export async function findDuplicates(dir: string): Promise<DuplicateGroup[]> {
       const full = path.join(d, e.name);
       if (e.isDirectory()) await walk(full, depth + 1);
       else if (e.isFile()) {
+        if (await isDenied(full)) continue; // don't surface secret paths
         try {
           const st = await fs.lstat(full);
           if (st.size === 0) continue;

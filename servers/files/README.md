@@ -44,6 +44,21 @@ Every destructive tool supports `dryRun` to preview before committing.
 |----------|----------|--------|
 | `FS_ROOTS` | **yes** | Allowed root directories, comma-separated. The server refuses to start without it. |
 | `FS_READONLY` | no | `1`/`true` registers only read tools (safe sharing). |
+| `FS_ALLOW_SECRETS` | no | `1`/`true` disables the secret denylist (see below). |
+| `FS_AUDIT_LOG` | no | Path to append a JSON-lines audit record of every mutation. |
+| `FS_OP_TIMEOUT_MS` | no | Per-operation timeout (default 30000). |
+| `FS_MAX_CONCURRENCY` | no | Max concurrent tool executions (default 8). |
+
+### Secret protection
+By default the server **blocks reads of, and hides from discovery,** files that commonly hold secrets:
+`.env`, `*.pem`, `*.key`, `id_rsa*`, `.ssh/**`, `.aws/**`, `.npmrc`, `credentials`, and more. Add your
+own patterns in a per-root **`.mcpignore`** (gitignore syntax). Set `FS_ALLOW_SECRETS=1` to disable.
+
+### Production hardening
+Every mutation is timestamped to `FS_AUDIT_LOG` (if set) and stderr. All ops run under a concurrency
+limit + per-op timeout. Reads stream (head reads and hashing never load whole files), and edits
+**preserve line endings** (a CRLF file stays CRLF) and BOMs. The server ships with a committed
+`node:test` suite (unit tests for the sandbox + integration/security tests) run in CI.
 
 ## Security
 

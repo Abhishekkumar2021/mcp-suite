@@ -72,6 +72,13 @@ hash-guarded line ranges, `dryRun` diffs); `unzip` is zip-slip protected; search
 boot without it); the MCP `roots` protocol is deprecated (SEP-2577) + buggy in Claude Code, so it's only
 a best-effort augment after connect, never the sole source.
 
+v0.2 hardening modules: `log.ts` (structured stderr + `FS_AUDIT_LOG` audit of mutations), `runtime.ts`
+(`guard()` = concurrency semaphore + per-op timeout, wrapping every handler in `index.ts`), `encoding.ts`
+(BOM + CRLF/LF preservation on edits; binary → clean error), `denylist.ts` (block-by-default secret
+files + `.mcpignore` via the `ignore` dep; `FS_ALLOW_SECRETS=1` overrides). Tests are committed under
+`servers/files/test/` (`node:test`, run by the CI **test** job via `npm test --workspaces`); reads/hash
+stream rather than load whole files.
+
 ## Distribution (per server)
 
 Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:

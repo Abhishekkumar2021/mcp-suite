@@ -3,7 +3,7 @@
   "name": "io.github.Abhishekkumar2021/files",
   "title": "Files",
   "description": "Sandboxed local filesystem: read, search, edit, copy, archive, and safely manage files.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "url": "https://github.com/Abhishekkumar2021/mcp-suite",
     "source": "github"
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@abhishekmcp/files",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": { "type": "stdio" },
       "runtimeHint": "npx",
       "environmentVariables": [

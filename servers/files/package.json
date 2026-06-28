@@ -1,6 +1,6 @@
 {
   "name": "@abhishekmcp/files",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for the local filesystem — read, search, edit, copy, archive, and safely manage files within sandboxed roots, from any MCP client.",
   "mcpName": "io.github.Abhishekkumar2021/files",
   "type": "module",
@@ -19,6 +19,7 @@
     "watch": "tsc --watch",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
+    "test": "npm run build && node --test test/*.test.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -47,6 +48,7 @@
     "diff": "^9.0.0",
     "fast-glob": "^3.3.2",
     "fflate": "^0.8.2",
+    "ignore": "^7.0.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

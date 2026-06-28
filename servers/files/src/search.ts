@@ -8,6 +8,7 @@ import path from "node:path";
 import fg from "fast-glob";
 import { MAX_RESULTS, TRASH_DIR } from "./config.js";
 import { displayPath, getRoots, resolveInside } from "./sandbox.js";
+import { isDenied } from "./denylist.js";
 
 const DEFAULT_EXCLUDES = ["**/node_modules/**", "**/.git/**", `**/${TRASH_DIR}/**`];
 
@@ -46,7 +47,10 @@ export async function findFiles(
     ignore: [...DEFAULT_EXCLUDES, ...(opts.exclude ?? [])],
     suppressErrors: true,
   });
-  const safe = found.filter(insideAnyRoot);
+  const safe: string[] = [];
+  for (const f of found) {
+    if (insideAnyRoot(f) && !(await isDenied(f))) safe.push(f);
+  }
   return { matches: safe.slice(0, limit).map(displayPath), truncated: safe.length > limit };
 }
 
@@ -112,6 +116,7 @@ export async function searchContent(
 
   for (const file of files) {
     if (!insideAnyRoot(file)) continue;
+    if (await isDenied(file)) continue; // never grep secret files
     let buf: Buffer;
     try {
       const st = await fs.stat(file);
