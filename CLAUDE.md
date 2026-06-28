@@ -79,6 +79,19 @@ files + `.mcpignore` via the `ignore` dep; `FS_ALLOW_SECRETS=1` overrides). Test
 `servers/files/test/` (`node:test`, run by the CI **test** job via `npm test --workspaces`); reads/hash
 stream rather than load whole files.
 
+## Server architecture: `github`
+
+`servers/github/src/` is the suite's first **auth/secrets** server (local stdio, `@octokit/rest`).
+`auth.ts` is the centerpiece: a token resolution chain — env PAT → cached OAuth token (auto-refreshed)
+→ **hand-rolled OAuth device flow** (request code → poll with `slow_down` handling → persist). Tokens
+cache at `~/.config/mcp-github/auth.json` with `0600` perms and are **never logged**; device flow uses a
+**public** client id (`GITHUB_CLIENT_ID`, no secret). `gh.ts` builds an Octokit per call with the
+resolved token and returns trimmed (token-efficient) objects. `index.ts` registers ~16 tools; writes are
+gated by `GITHUB_READONLY`; handlers map `NotAuthenticatedError`/Octokit errors to actionable text (incl.
+rate-limit hints). No auth is required at startup. Device-flow polling is bounded (~50s) and resumable to
+survive MCP tool-call timeouts. Tests mock global `fetch` for the device flow (CI-safe); real-API checks
+are manual (need a token), like notes' semantic test.
+
 ## Distribution (per server)
 
 Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:

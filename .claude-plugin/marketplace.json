@@ -21,6 +21,14 @@
       "source": "./plugins/files",
       "description": "Sandboxed local filesystem: read, search (glob + grep), token-efficient edits, copy/move, soft-delete trash, zip, checksums, and dedup.",
       "category": "productivity",
+      "version": "0.2.0",
+      "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" }
+    },
+    {
+      "name": "github",
+      "source": "./plugins/github",
+      "description": "GitHub: search repos/code/issues, read repos/issues/PRs/files, list notifications, create issues — via OAuth device flow or a token.",
+      "category": "productivity",
       "version": "0.1.0",
       "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" }
     }

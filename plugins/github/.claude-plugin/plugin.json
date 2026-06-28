@@ -1,0 +1,10 @@
+{
+  "name": "github",
+  "version": "0.1.0",
+  "description": "GitHub for any MCP client: search repos/code/issues, read repos/issues/PRs/files, list notifications, create issues — authenticated via OAuth device flow or a token. Runs @abhishekmcp/github via npx.",
+  "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" },
+  "homepage": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/plugins/github#readme",
+  "repository": "https://github.com/Abhishekkumar2021/mcp-suite",
+  "license": "MIT",
+  "keywords": ["github", "octokit", "issues", "pull-requests", "oauth"]
+}

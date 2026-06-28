@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Abhishekkumar2021/github",
+  "title": "GitHub",
+  "description": "GitHub via MCP: search, repos, issues, PRs, files, notifications. OAuth device flow or token.",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/Abhishekkumar2021/mcp-suite",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/Abhishekkumar2021/mcp-suite/tree/main/servers/github#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@abhishekmcp/github",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "npx",
+      "environmentVariables": [
+        {
+          "name": "GITHUB_TOKEN",
+          "description": "A GitHub Personal Access Token (skips the OAuth device flow).",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "GITHUB_CLIENT_ID",
+          "description": "OAuth App client id (public) to enable the device-flow login.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "GITHUB_READONLY",
+          "description": "Set to 1 or true to disable issue-creating/commenting tools.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

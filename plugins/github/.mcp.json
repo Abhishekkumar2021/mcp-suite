@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@abhishekmcp/github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_CLIENT_ID": "${GITHUB_CLIENT_ID}"
+      }
+    }
+  }
+}
