@@ -63,3 +63,37 @@ jobs:
 
       - name: Publish with provenance
         run: npm publish -w "servers/${{ steps.target.outputs.server }}" --provenance --access public
+
+      # Publish to the official MCP registry (https://registry.modelcontextprotocol.io).
+      # Auth uses GitHub Actions OIDC (no secret) and works for the
+      # io.github.<owner>/* namespace because this workflow runs in that owner's repo.
+      # Skipped automatically for any server that doesn't ship a server.json.
+      - name: Publish to MCP registry
+        working-directory: servers/${{ steps.target.outputs.server }}
+        run: |
+          if [ ! -f server.json ]; then
+            echo "No server.json for ${{ steps.target.outputs.server }} — skipping registry publish."
+            exit 0
+          fi
+          # Keep server.json's version in lockstep with the package version (the
+          # release we just published), so contributors only bump package.json.
+          ver=$(node -p "require('./package.json').version")
+          tmp=$(mktemp)
+          jq --arg v "$ver" '.version = $v | .packages[0].version = $v' server.json > "$tmp" && mv "$tmp" server.json
+
+          # Install the mcp-publisher CLI (Go binary) for this runner's OS/arch.
+          os=$(uname -s | tr '[:upper:]' '[:lower:]')
+          arch=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_${os}_${arch}.tar.gz" | tar xz mcp-publisher
+
+          ./mcp-publisher validate
+          ./mcp-publisher login github-oidc
+          # npm may take a few seconds to expose the just-published version that the
+          # registry validates against — retry briefly.
+          for attempt in 1 2 3 4 5; do
+            if ./mcp-publisher publish; then
+              echo "Published to MCP registry."; exit 0
+            fi
+            echo "Registry publish attempt $attempt failed; retrying in 15s…"; sleep 15
+          done
+          echo "::error::MCP registry publish failed after retries"; exit 1
