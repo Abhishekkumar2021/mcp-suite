@@ -38,7 +38,7 @@ Each server lives in its own folder under [`servers/`](servers) and publishes to
 | [`notes`](servers/notes) | Local markdown notes: ranked full-text **and semantic** search, tags, todos, a `[[wiki-link]]` knowledge graph, daily notes + templates, and slash-command workflows (prompts) | ✅ Stable |
 | [`files`](servers/files) | Sandboxed local filesystem: read, glob + content search, token-efficient edits, copy/move, soft-delete trash, zip, checksums, and dedup | ✅ Stable |
 | [`github`](servers/github) | GitHub: search repos/code/issues, read repos/issues/PRs/files, notifications, create issues — OAuth device flow or token | ✅ Stable |
-| [`git`](servers/git) | Local Git: status, log, diff, file history, branches/tags, read-at-ref, and gated stage/commit — pure-JS, no git binary | ✅ Stable |
+| [`git`](servers/git) | Git: status, log, diff, file history, branches/tags, gated stage/commit, and remote clone/fetch/pull/push — pure-JS, no git binary | ✅ Stable |
 
 _More on the way: a Spotify controller, and others._
 

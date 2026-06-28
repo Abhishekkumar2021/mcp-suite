@@ -10,6 +10,8 @@ import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import git from "isomorphic-git";
+import { redact } from "../dist/repo.js";
+import { getGitToken } from "../dist/config.js";
 
 const SERVER = fileURLToPath(new URL("../dist/index.js", import.meta.url));
 const author = { name: "Test", email: "test@example.com" };
@@ -25,6 +27,7 @@ async function makeRepo() {
   await git.add({ fs, dir, filepath: "src/a.txt" });
   await git.commit({ fs, dir, message: "initial commit", author });
   await git.branch({ fs, dir, ref: "feature" });
+  await git.addRemote({ fs, dir, remote: "origin", url: "https://example.com/repo.git" });
   // working-tree variety:
   await fsp.writeFile(path.join(dir, "README.md"), "# Project\nhello world\n"); // modified, unstaged
   await fsp.writeFile(path.join(dir, "staged.txt"), "new file\n");
@@ -127,6 +130,41 @@ test("write tools are gated by GIT_WRITABLE", async () => {
     rw.close();
     await fsp.rm(dir, { recursive: true, force: true });
   }
+});
+
+test("remote: list_remotes always; clone/fetch/push gated by GIT_WRITABLE", async () => {
+  const dir = await makeRepo();
+  const ro = await start({ GIT_ROOTS: dir });
+  try {
+    const names = (await ro.send("tools/list", {})).result.tools.map((t) => t.name);
+    assert.ok(names.includes("list_remotes"), "list_remotes always available");
+    for (const w of ["git_clone", "git_fetch", "git_pull", "git_push"]) assert.ok(!names.includes(w), `${w} gated`);
+    assert.match(await callText(ro, "list_remotes", { repo: "." }), /origin/);
+    assert.match(await callText(ro, "list_remotes", { repo: "." }), /example\.com/);
+  } finally {
+    ro.close();
+  }
+  const rw = await start({ GIT_ROOTS: dir, GIT_WRITABLE: "1" });
+  try {
+    const names = (await rw.send("tools/list", {})).result.tools.map((t) => t.name);
+    for (const w of ["git_clone", "git_fetch", "git_pull", "git_push"]) assert.ok(names.includes(w), `${w} present when writable`);
+  } finally {
+    rw.close();
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("redact strips token patterns; token resolution prefers GIT_TOKEN then GITHUB_TOKEN", () => {
+  assert.doesNotMatch(redact("fatal: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"), /ghp_ABCDEF/);
+  delete process.env.GIT_TOKEN;
+  delete process.env.GITHUB_TOKEN;
+  assert.equal(getGitToken(), undefined);
+  process.env.GITHUB_TOKEN = "fallback_tok";
+  assert.equal(getGitToken(), "fallback_tok");
+  process.env.GIT_TOKEN = "primary_tok";
+  assert.equal(getGitToken(), "primary_tok");
+  delete process.env.GIT_TOKEN;
+  delete process.env.GITHUB_TOKEN;
 });
 
 test("security: repo outside roots rejected; no roots refuses to start", async () => {

@@ -2,7 +2,17 @@ import { homedir } from "node:os";
 import path from "node:path";
 
 /** Server version (kept in lockstep with package.json + index.ts). */
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
+
+/** Token for HTTPS remote auth (clone/fetch/pull/push). Falls back to GITHUB_TOKEN. */
+export function getGitToken(): string | undefined {
+  return (process.env.GIT_TOKEN || process.env.GITHUB_TOKEN)?.trim() || undefined;
+}
+
+/** Optional username for HTTPS basic auth (defaults to the token). */
+export function getGitUsername(): string | undefined {
+  return process.env.GIT_USERNAME?.trim() || undefined;
+}
 
 /** Default / max number of commits returned by log-style tools. */
 export const DEFAULT_LOG_DEPTH = 50;

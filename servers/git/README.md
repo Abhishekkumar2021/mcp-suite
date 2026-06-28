@@ -16,18 +16,24 @@ repositories on your machine. Built on **isomorphic-git** — a pure-JavaScript 
 - `read_file_at` — a file's contents at a ref/commit
 - `list_branches`, `list_tags`, `current_branch`, `search_log`
 
-**Write (only when `GIT_WRITABLE=1`):**
-- `git_stage`, `git_unstage`, `git_commit` (author from git config or args), `git_create_branch`, `git_checkout`
+- `list_remotes` — configured remotes (name + URL)
 
-> No blame and no remote ops (clone/fetch/push) in this version — remotes need credentials and are planned
-> for a later release. Diffs are computed in pure JS (size-capped).
+**Write + remote (only when `GIT_WRITABLE=1`):**
+- Local: `git_stage`, `git_unstage`, `git_commit` (author from git config or args), `git_create_branch`, `git_checkout`
+- Remote (HTTPS): `git_clone`, `git_fetch`, `git_pull` (fast-forward), `git_push`
+
+> **Remotes are HTTPS-only** (isomorphic-git has no SSH). Public clone/fetch work anonymously; private
+> repos and push need a token (`GIT_TOKEN`). `git_pull` is fast-forward only. No blame. Diffs are computed
+> in pure JS (size-capped).
 
 ## Configuration
 
 | Variable | Required | Effect |
 |----------|----------|--------|
 | `GIT_ROOTS` | **yes** | Allowed repo root directories (comma-separated). The server refuses to start without it. |
-| `GIT_WRITABLE` | no | `1`/`true` enables the local write tools. |
+| `GIT_WRITABLE` | no | `1`/`true` enables the write + remote tools. |
+| `GIT_TOKEN` / `GITHUB_TOKEN` | no | PAT for HTTPS remote auth (private clone/fetch/pull/push). |
+| `GIT_USERNAME` | no | Username for HTTPS basic auth (defaults to the token). |
 
 Every `repo` argument is sandboxed to `GIT_ROOTS` (lexical + realpath containment; symlink escapes rejected).
 

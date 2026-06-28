@@ -35,9 +35,9 @@
     {
       "name": "git",
       "source": "./plugins/git",
-      "description": "Local Git: status, log, diff, file history, branches/tags, read-at-ref, and gated stage/commit — pure-JS, no git binary.",
+      "description": "Git: status, log, diff, file history, branches/tags, gated stage/commit, and remote clone/fetch/pull/push — pure-JS, no git binary.",
       "category": "productivity",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": { "name": "Abhishek", "url": "https://github.com/Abhishekkumar2021" }
     }
   ]

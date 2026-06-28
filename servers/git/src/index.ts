@@ -15,7 +15,7 @@ const server = new McpServer({ name: "mcp-git-server", version: VERSION });
 
 const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
 const json = (v: unknown) => text(JSON.stringify(v, null, 2));
-const fail = (err: unknown) => text(`Error: ${(err as Error).message}`);
+const fail = (err: unknown) => text(`Error: ${repo.redact((err as Error).message)}`);
 
 const repoArg = z.string().describe("Path to a git repository (within GIT_ROOTS; default the first root)");
 const limitArg = z.number().int().positive().max(1000).optional();
@@ -149,6 +149,19 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  "list_remotes",
+  { title: "List remotes", description: "Configured remotes (name + URL).", inputSchema: { repo: repoArg } },
+  async ({ repo: r }) => {
+    try {
+      const remotes = await repo.listRemotes(r);
+      return remotes.length ? json(remotes) : text("(no remotes)");
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
 // --- Write tools (only when GIT_WRITABLE=1) ------------------------------
 
 if (isWritable()) {
@@ -210,6 +223,55 @@ if (isWritable()) {
     async ({ repo: r, ref }) => {
       try {
         return text(await repo.checkout(r, ref));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  // Remote ops (HTTPS only; token via GIT_TOKEN/GITHUB_TOKEN).
+  server.registerTool(
+    "git_clone",
+    { title: "Clone", description: "Clone a remote repo (HTTPS) into a directory inside GIT_ROOTS.", inputSchema: { url: z.string().describe("HTTPS clone URL"), dest: z.string().describe("Destination path (within GIT_ROOTS)"), depth: z.number().int().positive().optional(), ref: z.string().optional().describe("Branch/tag to clone") } },
+    async ({ url, dest, depth, ref }) => {
+      try {
+        return text(await repo.clone(url, dest, { depth, ref }));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "git_fetch",
+    { title: "Fetch", description: "Fetch from a remote (HTTPS).", inputSchema: { repo: repoArg, remote: z.string().optional(), ref: z.string().optional() } },
+    async ({ repo: r, remote, ref }) => {
+      try {
+        return json(await repo.fetchRemote(r, { remote, ref }));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "git_pull",
+    { title: "Pull", description: "Fetch + fast-forward the current branch (HTTPS). Errors if a merge is required.", inputSchema: { repo: repoArg, remote: z.string().optional(), ref: z.string().optional(), name: z.string().optional(), email: z.string().optional() } },
+    async ({ repo: r, remote, ref, name, email }) => {
+      try {
+        return text(await repo.pull(r, { remote, ref, name, email }));
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "git_push",
+    { title: "Push", description: "Push commits to a remote (HTTPS). Requires GIT_TOKEN for private repos.", inputSchema: { repo: repoArg, remote: z.string().optional(), ref: z.string().optional() }, annotations: { destructiveHint: true } },
+    async ({ repo: r, remote, ref }) => {
+      try {
+        return json(await repo.push(r, { remote, ref }));
       } catch (err) {
         return fail(err);
       }

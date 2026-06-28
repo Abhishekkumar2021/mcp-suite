@@ -6,9 +6,37 @@
  */
 import fs from "node:fs";
 import git from "isomorphic-git";
+import http from "isomorphic-git/http/node";
 import { createPatch } from "diff";
-import { DEFAULT_LOG_DEPTH, MAX_DIFF_BYTES, MAX_LOG_DEPTH } from "./config.js";
+import { DEFAULT_LOG_DEPTH, MAX_DIFF_BYTES, MAX_LOG_DEPTH, getGitToken, getGitUsername } from "./config.js";
 import { resolveRepo } from "./sandbox.js";
+
+/** Strip token patterns from text (defense-in-depth before surfacing errors). */
+export function redact(s: string): string {
+  return s
+    .replace(/\bgh[pousr]_[A-Za-z0-9]{16,}\b/g, "gh*_***")
+    .replace(/\bgithub_pat_[A-Za-z0-9_]{16,}\b/g, "github_pat_***")
+    .replace(/\bglpat-[A-Za-z0-9_-]{16,}\b/g, "glpat-***");
+}
+
+/** Credentials for HTTPS remotes (token as basic auth). Undefined → anonymous. */
+function onAuth() {
+  const token = getGitToken();
+  if (!token) return undefined;
+  return { username: getGitUsername() || token, password: token };
+}
+
+/** Translate network/auth errors into actionable, redacted messages. */
+function netError(err: unknown): Error {
+  const m = redact((err as Error)?.message ?? String(err));
+  if (/401|unauthor|authentication|forbidden|403/i.test(m)) {
+    return new Error(`Authentication failed — set GIT_TOKEN (and GIT_USERNAME if needed). ${m}`);
+  }
+  if (/fast-forward|non-fast|rejected|push.*not/i.test(m)) {
+    return new Error(`Push/pull not a fast-forward — pull/rebase first. ${m}`);
+  }
+  return new Error(m);
+}
 
 const depthOf = (n?: number) => Math.min(Math.max(n ?? DEFAULT_LOG_DEPTH, 1), MAX_LOG_DEPTH);
 const firstLine = (s: string) => s.split("\n")[0];
@@ -218,4 +246,58 @@ export async function checkout(repoPath: string, ref: string) {
   const dir = await resolveRepo(repoPath);
   await git.checkout({ fs, dir, ref });
   return `Checked out ${ref}.`;
+}
+
+// --- Remote ops (HTTPS only; gated by GIT_WRITABLE in index.ts) -----------
+
+export async function listRemotes(repoPath: string) {
+  const dir = await resolveRepo(repoPath);
+  return git.listRemotes({ fs, dir });
+}
+
+export async function clone(url: string, dest: string, opts: { depth?: number; ref?: string; singleBranch?: boolean } = {}) {
+  const dir = await resolveRepo(dest);
+  try {
+    const entries = await fs.promises.readdir(dir);
+    if (entries.length > 0) throw new Error(`Destination "${dest}" is not empty.`);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+  }
+  try {
+    await git.clone({ fs, http, dir, url, onAuth, depth: opts.depth, ref: opts.ref, singleBranch: opts.singleBranch ?? !!opts.ref });
+  } catch (err) {
+    throw netError(err);
+  }
+  return `Cloned ${url} → ${dest}.`;
+}
+
+export async function fetchRemote(repoPath: string, opts: { remote?: string; ref?: string } = {}) {
+  const dir = await resolveRepo(repoPath);
+  try {
+    const res = await git.fetch({ fs, http, dir, remote: opts.remote || "origin", ref: opts.ref, onAuth, singleBranch: !!opts.ref, tags: false });
+    return { fetchHead: res.fetchHead, fetchHeadDescription: res.fetchHeadDescription, defaultBranch: res.defaultBranch };
+  } catch (err) {
+    throw netError(err);
+  }
+}
+
+export async function pull(repoPath: string, opts: { remote?: string; ref?: string; name?: string; email?: string } = {}) {
+  const dir = await resolveRepo(repoPath);
+  const author = opts.name && opts.email ? { name: opts.name, email: opts.email } : undefined;
+  try {
+    await git.pull({ fs, http, dir, remote: opts.remote || "origin", ref: opts.ref, onAuth, fastForward: true, singleBranch: !!opts.ref, ...(author ? { author } : {}) });
+    return `Pulled ${opts.remote || "origin"}${opts.ref ? `/${opts.ref}` : ""}.`;
+  } catch (err) {
+    throw netError(err);
+  }
+}
+
+export async function push(repoPath: string, opts: { remote?: string; ref?: string } = {}) {
+  const dir = await resolveRepo(repoPath);
+  try {
+    const res = await git.push({ fs, http, dir, remote: opts.remote || "origin", ref: opts.ref, onAuth });
+    return { ok: res.ok, errors: res.error ?? null, refs: res.refs };
+  } catch (err) {
+    throw netError(err);
+  }
 }

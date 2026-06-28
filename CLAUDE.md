@@ -105,9 +105,12 @@ env: `GITHUB_TIMEOUT_MS`, `GITHUB_API_URL`, `GITHUB_AUDIT_LOG`.
 `repo.ts` holds the isomorphic-git wrappers; notable gaps handled in-house — **no high-level diff** (built
 via `git.walk()` over two trees + `diff.createPatch` per file, size-capped) and **no blame** (omitted).
 `git_show` resolves a ref/short-oid via `resolveRef`→`expandOid`, and lists all files for a root commit.
-Write tools (stage/unstage/commit/branch/checkout) are registered only when `GIT_WRITABLE=1`; remote ops
-(clone/fetch/push) are deferred (need credentials). Tests are self-contained — they build a real repo with
-isomorphic-git itself, so no system git is needed in CI.
+Write tools (stage/unstage/commit/branch/checkout) are registered only when `GIT_WRITABLE=1`. Tests are
+self-contained — they build a real repo with isomorphic-git itself, so no system git is needed in CI.
+**v0.2** adds remote ops (`git_clone`/`git_fetch`/`git_pull`(FF)/`git_push` + read `list_remotes`) over
+isomorphic-git's `http/node` client — **HTTPS only** (no SSH), gated by `GIT_WRITABLE`, token auth via
+`GIT_TOKEN`/`GITHUB_TOKEN` (`onAuth`), errors mapped to auth/fast-forward hints with token `redact()`.
+Remote tests are network → manual; CI covers gating + `list_remotes` + token resolution + redact.
 
 ## Distribution (per server)
 
