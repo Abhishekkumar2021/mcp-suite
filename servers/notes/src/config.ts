@@ -29,7 +29,8 @@ export function getIndexPath(): string {
 
 /** When true, all mutating tools are disabled (safe for sharing a vault read-only). */
 export function isReadOnly(): boolean {
-  return process.env.NOTES_READONLY === "1";
+  const v = (process.env.NOTES_READONLY ?? "").toLowerCase();
+  return v === "1" || v === "true";
 }
 
 /** When true, skip the on-disk index cache and rebuild in memory each start. */

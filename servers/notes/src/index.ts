@@ -43,7 +43,7 @@ import {
 } from "./extras.js";
 import { dailyStandup, summarizeNote, weeklyReview } from "./prompts.js";
 
-const server = new McpServer({ name: "mcp-notes-server", version: "0.4.0" });
+const server = new McpServer({ name: "mcp-notes-server", version: "0.4.1" });
 
 const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
 const fail = (err: unknown) => text(`Error: ${(err as Error).message}`);
@@ -541,7 +541,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `mcp-notes-server v0.4.0 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
+    `mcp-notes-server v0.4.1 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
   );
 }
 

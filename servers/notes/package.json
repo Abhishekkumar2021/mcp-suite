@@ -1,7 +1,8 @@
 {
   "name": "@abhishekmcp/notes",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "MCP server for local markdown notes — ranked search, tags, todos, and a wiki-link knowledge graph, from any MCP client.",
+  "mcpName": "io.github.Abhishekkumar2021/notes",
   "type": "module",
   "bin": {
     "mcp-notes": "dist/index.js"
