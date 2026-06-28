@@ -76,3 +76,23 @@ export function getModelDir(): string {
 export function getEmbeddingsPath(): string {
   return path.join(getNotesDir(), EMBEDDINGS_FILENAME);
 }
+
+// --- Note-app quality-of-life (v0.4) -------------------------------------
+
+/** Subdirectory (within the vault) for daily notes. Override with NOTES_DAILY_DIR. */
+export function getDailyDir(): string {
+  return process.env.NOTES_DAILY_DIR || "daily";
+}
+
+/** Subdirectory (within the vault) holding note templates. Override with NOTES_TEMPLATE_DIR. */
+export function getTemplateDir(): string {
+  return process.env.NOTES_TEMPLATE_DIR || "templates";
+}
+
+/** Local-time date stamp, YYYY-MM-DD (the daily-note naming scheme). */
+export function todayStamp(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}

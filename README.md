@@ -28,7 +28,7 @@ Each server lives in its own folder under [`servers/`](servers) and publishes to
 
 | Server | Description | Status |
 |--------|-------------|--------|
-| [`notes`](servers/notes) | Local markdown notes with ranked full-text **and semantic** search, tags, todos, and a `[[wiki-link]]` knowledge graph (backlinks, neighbors, paths, related notes) | ✅ Stable |
+| [`notes`](servers/notes) | Local markdown notes: ranked full-text **and semantic** search, tags, todos, a `[[wiki-link]]` knowledge graph, daily notes + templates, and slash-command workflows (prompts) | ✅ Stable |
 
 _More on the way: a GitHub helper, a Spotify controller, and others._
 

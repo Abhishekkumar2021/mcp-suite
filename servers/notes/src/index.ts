@@ -14,6 +14,7 @@ import {
   buildIndex,
   createNote,
   deleteNote,
+  getAllMeta,
   getOutline,
   listNotes,
   listTags,
@@ -32,8 +33,17 @@ import {
   relatedNotes,
 } from "./graph.js";
 import { semanticSearch } from "./semantic.js";
+import { completable } from "@modelcontextprotocol/sdk/server/completable.js";
+import {
+  createFromTemplate,
+  dailyNote,
+  listTemplates,
+  renameTag,
+  unlinkedMentions,
+} from "./extras.js";
+import { dailyStandup, summarizeNote, weeklyReview } from "./prompts.js";
 
-const server = new McpServer({ name: "mcp-notes-server", version: "0.3.0" });
+const server = new McpServer({ name: "mcp-notes-server", version: "0.4.0" });
 
 const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
 const fail = (err: unknown) => text(`Error: ${(err as Error).message}`);
@@ -288,6 +298,39 @@ server.registerTool(
   },
 );
 
+server.registerTool(
+  "list_templates",
+  {
+    title: "List templates",
+    description: "List available note templates (from the templates directory).",
+    inputSchema: {},
+  },
+  async () => {
+    const tpls = await listTemplates();
+    if (tpls.length === 0) return text("No templates found.");
+    return text(tpls.map((t) => `- ${t}`).join("\n"));
+  },
+);
+
+server.registerTool(
+  "unlinked_mentions",
+  {
+    title: "Unlinked mentions",
+    description:
+      "Find notes that mention this note's title as plain text but don't yet link to it " +
+      "with [[wiki-link]] syntax — candidates for linking.",
+    inputSchema: { name: z.string().describe("The note to find unlinked mentions of") },
+  },
+  async ({ name }) => {
+    const mentions = await unlinkedMentions(name);
+    if (mentions.length === 0) return text(`No unlinked mentions of "${name}".`);
+    return text(
+      `${mentions.length} unlinked mention(s):\n` +
+        mentions.map((m) => `- ${m.note}:${m.line}: ${m.text}`).join("\n"),
+    );
+  },
+);
+
 // --- Mutating tools (omitted entirely when NOTES_READONLY=1) --------------
 
 if (!isReadOnly()) {
@@ -371,7 +414,110 @@ if (!isReadOnly()) {
       }
     },
   );
+
+  server.registerTool(
+    "daily_note",
+    {
+      title: "Daily note",
+      description:
+        "Open today's daily note (creating it if needed) and optionally append a timestamped entry. " +
+        "Great for journaling and running logs.",
+      inputSchema: {
+        entry: z.string().optional().describe("Text to append as a timestamped bullet"),
+        date: z.string().optional().describe("Target date YYYY-MM-DD (default today)"),
+      },
+    },
+    async ({ entry, date }) => {
+      try {
+        const r = await dailyNote(entry, date);
+        const what = r.created ? "Created" : "Opened";
+        return text(`${what} daily note "${r.name}"${r.appended ? " and appended your entry." : "."}`);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "create_from_template",
+    {
+      title: "Create note from template",
+      description:
+        "Create a note from a template, substituting {{date}}, {{time}}, {{title}}, and any extra vars.",
+      inputSchema: {
+        template: z.string().describe("Template name (see list_templates)"),
+        name: z.string().describe("Name for the new note"),
+        vars: z.record(z.string()).optional().describe("Extra {{key}} substitutions"),
+      },
+    },
+    async ({ template, name, vars }) => {
+      try {
+        const n = await createFromTemplate(template, name, vars ?? {});
+        return text(`Created note "${n}" from template "${template}".`);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    "rename_tag",
+    {
+      title: "Rename a tag",
+      description:
+        "Rename a tag across the whole vault — rewrites frontmatter tags and inline #hashtags.",
+      inputSchema: {
+        from: z.string().describe("Existing tag (with or without #)"),
+        to: z.string().describe("New tag name"),
+      },
+    },
+    async ({ from, to }) => {
+      try {
+        const r = await renameTag(from, to);
+        if (r.changed.length === 0) return text(`No notes use the tag "${r.from}".`);
+        return text(`Renamed "${r.from}" → "${r.to}" in ${r.changed.length} note(s): ${r.changed.join(", ")}.`);
+      } catch (err) {
+        return fail(err);
+      }
+    },
+  );
 }
+
+// --- Prompts (user-triggered workflows; always available) ----------------
+
+server.registerPrompt(
+  "weekly_review",
+  {
+    title: "Weekly review",
+    description: "Summarize the past 7 days of notes and open todos into a weekly review.",
+    argsSchema: {},
+  },
+  async () => weeklyReview(),
+);
+
+server.registerPrompt(
+  "summarize_note",
+  {
+    title: "Summarize a note",
+    description: "Summarize a specific note into key points and action items.",
+    argsSchema: {
+      name: completable(z.string().describe("Note name"), (value) =>
+        [...getAllMeta().keys()].filter((n) => n.toLowerCase().includes(value.toLowerCase())).slice(0, 25),
+      ),
+    },
+  },
+  async ({ name }) => summarizeNote(name),
+);
+
+server.registerPrompt(
+  "daily_standup",
+  {
+    title: "Daily standup",
+    description: "Draft a standup (Yesterday / Today / Blockers) from your daily notes and todos.",
+    argsSchema: {},
+  },
+  async () => dailyStandup(),
+);
 
 // --- Resources -----------------------------------------------------------
 
@@ -395,7 +541,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `mcp-notes-server v0.3.0 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
+    `mcp-notes-server v0.4.0 running${isReadOnly() ? " (read-only)" : ""}. Notes dir: ${notesDir()}`,
   );
 }
 

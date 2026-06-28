@@ -29,6 +29,18 @@ Pure JavaScript, no native dependencies, no API keys — everything runs locally
 - `graph_overview` — aggregate health: note/link/tag counts, top hubs, orphans, broken-link count
 - `broken_links` — wiki-links that point at notes which don't exist
 
+### Organization & daily workflow
+- `daily_note` — open today's daily note (creating it if needed) and append a timestamped entry
+- `list_templates` / `create_from_template` — instantiate a note from a template, substituting `{{date}}`/`{{time}}`/`{{title}}` plus your own vars
+- `rename_tag` — rename a tag across the whole vault (frontmatter + inline `#hashtags`)
+- `unlinked_mentions` — find notes that mention a note's title as plain text but don't yet `[[link]]` to it
+
+### Prompts (slash-command workflows)
+Exposed via the MCP Prompts primitive — your client surfaces these as slash commands:
+- `weekly_review` — summarize the last 7 days of notes + open todos
+- `summarize_note` — summarize one note (with note-name autocomplete)
+- `daily_standup` — draft a standup from yesterday/today's daily notes + open todos
+
 ### Resources
 - Every note is exposed as a `notes://<name>` resource.
 
@@ -54,6 +66,8 @@ All via environment variables:
 | `NOTES_READONLY` | _unset_ | Set to `1` to disable all mutating tools (`create`/`append`/`delete`/`move` are not even registered) — safe for sharing a vault. |
 | `NOTES_NO_CACHE` | _unset_ | Set to `1` to skip the on-disk index cache and rebuild in memory each start. |
 | `NOTES_MODEL_DIR` | `~/.cache/mcp-notes/models` | Where the semantic-search embedding model is cached. |
+| `NOTES_DAILY_DIR` | `daily` | Subdirectory (within the vault) for daily notes. |
+| `NOTES_TEMPLATE_DIR` | `templates` | Subdirectory (within the vault) holding note templates. |
 
 ### Semantic search & the embedding model
 `semantic_search` runs the [all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2) model **locally** via WebAssembly ([onnxruntime-web](https://github.com/microsoft/onnxruntime)) — no API keys, no native dependencies, no data leaves your machine. The quantized model (~23 MB) is downloaded **once** on first use into `NOTES_MODEL_DIR` and cached; embeddings are stored in `<NOTES_DIR>/.notes-embeddings.json` and incrementally updated as notes change. The first `semantic_search` call needs network access for the download and embeds the whole vault; everything after that is offline and fast. Keyword search and all other tools work without ever triggering this.

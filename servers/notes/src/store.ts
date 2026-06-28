@@ -284,6 +284,18 @@ async function syncFromDisk(name: string): Promise<void> {
   await indexNote(normalizeLinkTarget(name), abs, stat.mtimeMs, stat.size);
 }
 
+/**
+ * Overwrite an existing note's raw content and keep the index/graph/cache in
+ * sync. Used by bulk rewrites (e.g. rename_tag) that edit files in place.
+ */
+export async function updateNoteRaw(name: string, content: string): Promise<void> {
+  assertWritable();
+  const abs = await resolveSafe(name);
+  await atomicWrite(abs, content);
+  await syncFromDisk(name);
+  await writeCache();
+}
+
 export async function createNote(name: string, content: string, overwrite = false): Promise<string> {
   assertWritable();
   const abs = await resolveSafe(name);
