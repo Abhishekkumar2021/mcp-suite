@@ -49,17 +49,17 @@ npm run build    # builds every server
 
 ## Install
 
-Both servers ship through every common channel. Pick whichever fits your client (see each server's
-README for full config):
+Every server ships through every common channel. For the **Claude Code plugin**, add the marketplace
+once — `/plugin marketplace add Abhishekkumar2021/mcp-suite` — then install per the table. See each
+server's README for full config.
 
-| Method | notes | files |
-|--------|-------|-------|
-| **Claude Code plugin** | `/plugin marketplace add Abhishekkumar2021/mcp-suite` → `/plugin install notes` | …→ `/plugin install files` |
-| **npm (any client)** | `npx -y @abhishekmcp/notes` | `npx -y @abhishekmcp/files` |
-| **Claude Desktop (MCPB)** | drag `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) onto Settings → Extensions | drag `files-*.mcpb` |
-| **MCP registry** | `io.github.Abhishekkumar2021/notes` | `io.github.Abhishekkumar2021/files` |
+| Server | Claude Code plugin | npm (any client) | Claude Desktop (MCPB) | MCP registry |
+|--------|--------------------|------------------|-----------------------|--------------|
+| [`notes`](servers/notes) | `/plugin install notes` | `npx -y @abhishekmcp/notes` | drag `notes-*.mcpb` from the [latest release](https://github.com/Abhishekkumar2021/mcp-suite/releases) | `io.github.Abhishekkumar2021/notes` |
+| [`files`](servers/files) | `/plugin install files` | `npx -y @abhishekmcp/files` | drag `files-*.mcpb` | `io.github.Abhishekkumar2021/files` |
 
-> `notes` defaults to `~/notes`; `files` **requires** `FS_ROOTS` (the directories it may touch).
+> `notes` defaults to `~/notes`; `files` **requires** `FS_ROOTS` (the directories it may touch). MCPB
+> bundles install via Claude Desktop → Settings → Extensions.
 
 ## Connecting to a client
 
