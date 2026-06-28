@@ -14,6 +14,12 @@ GITHUB_TOKEN/GITHUB_PERSONAL_ACCESS_TOKEN (PAT, secret), GITHUB_CLIENT_ID (OAuth
 ## Tests
 `test/auth.test.mjs` (token resolution; device flow via MOCKED globalThis.fetch — authorize on 1st poll to avoid real 5s sleeps since interval defaults to 5 via `||5`; 0600 check) + `test/tools.test.mjs` (stdio: tools/list, readonly gating, unauth→guidance, login-without-client-id→setup msg). Real-API checks manual (need token), excluded from CI.
 
+## v0.2 hardening
+- `gh.ts`: `Octokit.plugin(retry, throttling)`; throttle onRateLimit/onSecondaryRateLimit retry bounded (2/1); `request.fetch` = timeoutFetch (AbortSignal.timeout(GITHUB_TIMEOUT_MS, def 30000)); `baseUrl` = getApiBaseUrl() (GITHUB_API_URL, GHES). `paginateCapped()` via `octokit.paginate.iterator as any` → list_issues/list_pull_requests/list_notifications return `{items, truncated}` up to MAX_ITEMS=300 (tool `limit` max raised to 300; search stays 100).
+- `log.ts`: structured stderr + `audit()` (GITHUB_AUDIT_LOG json-lines) wired into create_issue/add_issue_comment handlers; `redact()` strips gh*_/github_pat_ patterns, applied in `text()` (all output) + `fail()`.
+- `fail()`: 403 → rate-limit reset OR scope hint (reads x-oauth-scopes).
+- New env: GITHUB_TIMEOUT_MS, GITHUB_API_URL, GITHUB_AUDIT_LOG. Tests: test/hardening.test.mjs (redact, config getters, audit append). 15 tests total. Verified live: pagination >100 truncated, 1ms timeout aborts cleanly.
+
 ## Watch-outs / gotchas
 - Device-flow interval: `Number(data.interval)||5` floors to 5s → tests must authorize on first poll or they sleep 5s+ per pending.
 - `search.issuesAndPullRequests` is deprecated by GitHub (still works; tsc shows a hint).

@@ -92,6 +92,12 @@ rate-limit hints). No auth is required at startup. Device-flow polling is bounde
 survive MCP tool-call timeouts. Tests mock global `fetch` for the device flow (CI-safe); real-API checks
 are manual (need a token), like notes' semantic test.
 
+v0.2 hardening: Octokit is built with the official `retry` + `throttling` plugins (`gh.ts`) + a
+timeout `fetch` wrapper (`AbortSignal.timeout`) + `baseUrl` from `GITHUB_API_URL` (GHES); list tools
+paginate to `MAX_ITEMS` (300) and report truncation. `log.ts` adds structured logging + `audit()` of
+writes (`GITHUB_AUDIT_LOG`) and a `redact()` (strips token patterns) applied to all tool output. New
+env: `GITHUB_TIMEOUT_MS`, `GITHUB_API_URL`, `GITHUB_AUDIT_LOG`.
+
 ## Distribution (per server)
 
 Beyond npm, `notes` ships through several channels — keep them version-aligned when releasing:

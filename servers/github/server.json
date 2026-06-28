@@ -3,7 +3,7 @@
   "name": "io.github.Abhishekkumar2021/github",
   "title": "GitHub",
   "description": "GitHub via MCP: search, repos, issues, PRs, files, notifications. OAuth device flow or token.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "url": "https://github.com/Abhishekkumar2021/mcp-suite",
     "source": "github"
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@abhishekmcp/github",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": { "type": "stdio" },
       "runtimeHint": "npx",
       "environmentVariables": [

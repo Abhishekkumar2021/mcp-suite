@@ -1,6 +1,6 @@
 {
   "name": "@abhishekmcp/github",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for GitHub — search repos/code/issues, read repos/issues/PRs/files, and create issues, authenticated via OAuth device flow or a token, from any MCP client.",
   "mcpName": "io.github.Abhishekkumar2021/github",
   "type": "module",
@@ -45,6 +45,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@octokit/plugin-retry": "^7.2.1",
+    "@octokit/plugin-throttling": "^9.6.1",
     "@octokit/rest": "^21.0.0",
     "zod": "^3.23.8"
   },

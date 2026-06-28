@@ -4,14 +4,60 @@
  * trimmed, token-efficient objects rather than raw API payloads.
  */
 import { Octokit } from "@octokit/rest";
+import { retry } from "@octokit/plugin-retry";
+import { throttling } from "@octokit/plugin-throttling";
 import { getToken } from "./auth.js";
-import { DEFAULT_PER_PAGE, VERSION } from "./config.js";
+import { DEFAULT_PER_PAGE, MAX_ITEMS, VERSION, getApiBaseUrl, requestTimeoutMs } from "./config.js";
+import { log } from "./log.js";
 
-async function octo(): Promise<Octokit> {
-  return new Octokit({ auth: await getToken(), userAgent: `mcp-github/${VERSION}` });
+const ResilientOctokit = Octokit.plugin(retry, throttling);
+type OctokitInstance = InstanceType<typeof ResilientOctokit>;
+
+/** fetch wrapper that aborts a request after the configured timeout. */
+const timeoutFetch: typeof fetch = (url, opts = {}) =>
+  fetch(url, { ...opts, signal: opts.signal ?? AbortSignal.timeout(requestTimeoutMs()) });
+
+/**
+ * Build an Octokit with the resolved token, retry (5xx) + throttling
+ * (rate-limit aware), a request timeout, and the configured base URL (GHES).
+ */
+async function octo(): Promise<OctokitInstance> {
+  return new ResilientOctokit({
+    auth: await getToken(),
+    userAgent: `mcp-github/${VERSION}`,
+    baseUrl: getApiBaseUrl(),
+    request: { fetch: timeoutFetch },
+    throttle: {
+      onRateLimit: (retryAfter, options, _o, retryCount) => {
+        log("warn", "rate limit hit; backing off", { method: options.method, url: options.url, retryAfter, retryCount });
+        return retryCount < 2; // retry up to twice, then give up
+      },
+      onSecondaryRateLimit: (retryAfter, options, _o, retryCount) => {
+        log("warn", "secondary rate limit; backing off", { method: options.method, url: options.url, retryAfter, retryCount });
+        return retryCount < 1;
+      },
+    },
+  });
 }
 
 const cap = (n?: number) => Math.min(Math.max(n ?? DEFAULT_PER_PAGE, 1), 100);
+const itemCap = (n?: number) => Math.min(Math.max(n ?? DEFAULT_PER_PAGE, 1), MAX_ITEMS);
+
+/** Paginate an endpoint up to `max` items, reporting truncation. */
+async function paginateCapped<T>(
+  octokit: OctokitInstance,
+  route: string,
+  params: Record<string, unknown>,
+  max: number,
+): Promise<{ items: T[]; truncated: boolean }> {
+  const items: T[] = [];
+  const iterator = (octokit.paginate.iterator as any)(route, { ...params, per_page: 100 });
+  for await (const page of iterator) {
+    items.push(...((page.data as T[]) ?? []));
+    if (items.length >= max) return { items: items.slice(0, max), truncated: true };
+  }
+  return { items, truncated: false };
+}
 
 export async function whoami() {
   const { data } = await (await octo()).rest.users.getAuthenticated();
@@ -49,8 +95,11 @@ export async function getRepo(owner: string, repo: string) {
 }
 
 export async function listIssues(owner: string, repo: string, state: "open" | "closed" | "all", limit?: number) {
-  const { data } = await (await octo()).rest.issues.listForRepo({ owner, repo, state, per_page: cap(limit) });
-  return data.filter((i) => !i.pull_request).map((i) => ({ number: i.number, title: i.title, state: i.state, comments: i.comments, url: i.html_url }));
+  const { items, truncated } = await paginateCapped<any>(await octo(), "GET /repos/{owner}/{repo}/issues", { owner, repo, state }, itemCap(limit));
+  return {
+    items: items.filter((i) => !i.pull_request).map((i) => ({ number: i.number, title: i.title, state: i.state, comments: i.comments, url: i.html_url })),
+    truncated,
+  };
 }
 
 export async function getIssue(owner: string, repo: string, issue_number: number) {
@@ -69,8 +118,11 @@ export async function getIssue(owner: string, repo: string, issue_number: number
 }
 
 export async function listPullRequests(owner: string, repo: string, state: "open" | "closed" | "all", limit?: number) {
-  const { data } = await (await octo()).rest.pulls.list({ owner, repo, state, per_page: cap(limit) });
-  return data.map((p) => ({ number: p.number, title: p.title, state: p.state, author: p.user?.login, draft: p.draft, url: p.html_url }));
+  const { items, truncated } = await paginateCapped<any>(await octo(), "GET /repos/{owner}/{repo}/pulls", { owner, repo, state }, itemCap(limit));
+  return {
+    items: items.map((p) => ({ number: p.number, title: p.title, state: p.state, author: p.user?.login, draft: p.draft, url: p.html_url })),
+    truncated,
+  };
 }
 
 export async function getPullRequest(owner: string, repo: string, pull_number: number) {
@@ -102,8 +154,11 @@ export async function getFileContents(owner: string, repo: string, p: string, re
 }
 
 export async function listNotifications(limit?: number) {
-  const { data } = await (await octo()).rest.activity.listNotificationsForAuthenticatedUser({ per_page: cap(limit) });
-  return data.map((n) => ({ repo: n.repository.full_name, subject: n.subject.title, type: n.subject.type, reason: n.reason, unread: n.unread }));
+  const { items, truncated } = await paginateCapped<any>(await octo(), "GET /notifications", {}, itemCap(limit));
+  return {
+    items: items.map((n) => ({ repo: n.repository.full_name, subject: n.subject.title, type: n.subject.type, reason: n.reason, unread: n.unread })),
+    truncated,
+  };
 }
 
 export async function rateLimit() {

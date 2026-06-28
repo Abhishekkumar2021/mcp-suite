@@ -10,11 +10,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { VERSION, isReadOnly } from "./config.js";
 import { NotAuthenticatedError, authSource, login, logout } from "./auth.js";
+import { audit, redact } from "./log.js";
 import * as gh from "./gh.js";
 
 const server = new McpServer({ name: "mcp-github-server", version: VERSION });
 
-const text = (value: string) => ({ content: [{ type: "text" as const, text: value }] });
+const text = (value: string) => ({ content: [{ type: "text" as const, text: redact(value) }] });
 const json = (v: unknown) => text(JSON.stringify(v, null, 2));
 
 function fail(err: unknown) {
@@ -24,8 +25,13 @@ function fail(err: unknown) {
     let msg = `GitHub API error ${e.status}: ${e.message}`;
     if (e.status === 401) msg += " — token invalid/expired; run github_login or check GITHUB_TOKEN.";
     const h = e.response?.headers;
-    if (e.status === 403 && h?.["x-ratelimit-remaining"] === "0") {
-      msg += ` — rate limit exceeded; resets at ${new Date(Number(h["x-ratelimit-reset"]) * 1000).toISOString()}.`;
+    if (e.status === 403) {
+      if (h?.["x-ratelimit-remaining"] === "0") {
+        msg += ` — rate limit exceeded; resets at ${new Date(Number(h["x-ratelimit-reset"]) * 1000).toISOString()}.`;
+      } else {
+        const have = h?.["x-oauth-scopes"];
+        msg += ` — forbidden; your token may lack the required scope${have ? ` (has: ${have})` : " (writes need 'repo')"}.`;
+      }
     }
     return text(msg);
   }
@@ -131,7 +137,7 @@ server.registerTool(
 
 server.registerTool(
   "list_issues",
-  { title: "List issues", description: "List a repo's issues (excludes PRs).", inputSchema: { owner, repo, state: stateEnum, limit: z.number().int().positive().max(100).optional() } },
+  { title: "List issues", description: "List a repo's issues (excludes PRs).", inputSchema: { owner, repo, state: stateEnum, limit: z.number().int().positive().max(300).optional() } },
   async ({ owner, repo, state, limit }) => {
     try {
       return json(await gh.listIssues(owner, repo, state ?? "open", limit));
@@ -155,7 +161,7 @@ server.registerTool(
 
 server.registerTool(
   "list_pull_requests",
-  { title: "List pull requests", description: "List a repo's pull requests.", inputSchema: { owner, repo, state: stateEnum, limit: z.number().int().positive().max(100).optional() } },
+  { title: "List pull requests", description: "List a repo's pull requests.", inputSchema: { owner, repo, state: stateEnum, limit: z.number().int().positive().max(300).optional() } },
   async ({ owner, repo, state, limit }) => {
     try {
       return json(await gh.listPullRequests(owner, repo, state ?? "open", limit));
@@ -191,7 +197,7 @@ server.registerTool(
 
 server.registerTool(
   "list_notifications",
-  { title: "List notifications", description: "Your unread GitHub notifications.", inputSchema: { limit: z.number().int().positive().max(100).optional() } },
+  { title: "List notifications", description: "Your unread GitHub notifications.", inputSchema: { limit: z.number().int().positive().max(300).optional() } },
   async ({ limit }) => {
     try {
       return json(await gh.listNotifications(limit));
@@ -226,8 +232,11 @@ if (!isReadOnly()) {
     },
     async ({ owner, repo, title, body }) => {
       try {
-        return json(await gh.createIssue(owner, repo, title, body));
+        const r = await gh.createIssue(owner, repo, title, body);
+        await audit({ tool: "create_issue", target: `${owner}/${repo}#${r.number}`, outcome: "ok" });
+        return json(r);
       } catch (err) {
+        await audit({ tool: "create_issue", target: `${owner}/${repo}`, outcome: "error", detail: (err as Error).message });
         return fail(err);
       }
     },
@@ -243,8 +252,11 @@ if (!isReadOnly()) {
     },
     async ({ owner, repo, number, body }) => {
       try {
-        return json(await gh.addIssueComment(owner, repo, number, body));
+        const r = await gh.addIssueComment(owner, repo, number, body);
+        await audit({ tool: "add_issue_comment", target: `${owner}/${repo}#${number}`, outcome: "ok" });
+        return json(r);
       } catch (err) {
+        await audit({ tool: "add_issue_comment", target: `${owner}/${repo}#${number}`, outcome: "error", detail: (err as Error).message });
         return fail(err);
       }
     },

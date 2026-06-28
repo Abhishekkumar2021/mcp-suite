@@ -40,6 +40,15 @@ Tokens are cached locally with `0600` permissions and are never logged.
 | `GITHUB_TOKEN` / `GITHUB_PERSONAL_ACCESS_TOKEN` | Use this PAT (skips OAuth). |
 | `GITHUB_CLIENT_ID` | OAuth App client id for the device-flow login. |
 | `GITHUB_READONLY` | `1`/`true` → only read + auth tools are registered. |
+| `GITHUB_API_URL` | REST base URL (default `https://api.github.com`); set for GitHub Enterprise Server. |
+| `GITHUB_TIMEOUT_MS` | Per-request timeout (default 30000). |
+| `GITHUB_AUDIT_LOG` | Path to append a JSON-lines audit record of every write (issue/comment). |
+
+### Production hardening
+Requests use the official retry + throttling plugins (auto-retry transient `5xx`, **proactively wait on
+primary/secondary rate limits**) and a request timeout, so the server survives real GitHub conditions
+instead of failing or hanging. List tools paginate up to 300 items (reporting truncation). Tokens are
+never logged (output is redacted defense-in-depth), and writes are recorded to `GITHUB_AUDIT_LOG`.
 
 ## Usage
 

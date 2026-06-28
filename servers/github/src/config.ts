@@ -2,13 +2,32 @@ import { homedir } from "node:os";
 import path from "node:path";
 
 /** Server version (kept in lockstep with package.json + index.ts). */
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 /** OAuth scopes requested by the device flow (space-separated). */
 export const SCOPES = "repo read:org notifications";
 
 /** Default page size for list/search endpoints. */
 export const DEFAULT_PER_PAGE = 30;
+
+/** Per-request timeout (ms) — a stuck request aborts instead of hanging. */
+export function requestTimeoutMs(): number {
+  const n = Number(process.env.GITHUB_TIMEOUT_MS);
+  return Number.isFinite(n) && n > 0 ? n : 30_000;
+}
+
+/** Max items returned by paginated list tools (bounds response size). */
+export const MAX_ITEMS = 300;
+
+/** REST API base URL — override for GitHub Enterprise Server via GITHUB_API_URL. */
+export function getApiBaseUrl(): string {
+  return process.env.GITHUB_API_URL?.trim().replace(/\/+$/, "") || "https://api.github.com";
+}
+
+/** Optional path to append a JSON-lines audit log of mutations. */
+export function getAuditLogPath(): string | undefined {
+  return process.env.GITHUB_AUDIT_LOG?.trim() || undefined;
+}
 
 /** GitHub OAuth endpoints (device flow). */
 export const DEVICE_CODE_URL = "https://github.com/login/device/code";
